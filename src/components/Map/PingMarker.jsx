@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { format } from 'date-fns';
@@ -14,17 +13,7 @@ function makePingIcon(initials) {
 }
 
 export default function PingMarker({ uid, data, timestamp }) {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const age = Date.now() - timestamp;
-    const remaining = Math.max(0, 30000 - age);
-    if (remaining === 0) { setVisible(false); return; }
-    const t = setTimeout(() => setVisible(false), remaining);
-    return () => clearTimeout(t);
-  }, [timestamp]);
-
-  if (!visible || data.lat == null || data.lng == null) return null;
+  if (data.lat == null || data.lng == null) return null;
 
   const initials = (data.name || '?').slice(0, 2).toUpperCase();
   const timeStr = format(new Date(timestamp), 'HH:mm', { locale: de });

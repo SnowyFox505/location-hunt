@@ -12,10 +12,19 @@ function RecenterMap({ center }) {
 }
 
 export default function GameMap({ center, zoom = 17, zone, players = [], pings = null, myUid, showPlayers = true, showPings = false }) {
+  // Keep only the latest ping per hider (replaces old one when new ping arrives)
   const pingEntries = pings
-    ? Object.entries(pings).flatMap(([ts, pingPlayers]) =>
-        Object.entries(pingPlayers).map(([uid, data]) => ({ uid, data, timestamp: parseInt(ts) }))
-      )
+    ? Object.entries(
+        Object.entries(pings).reduce((latest, [ts, pingPlayers]) => {
+          const t = parseInt(ts);
+          Object.entries(pingPlayers).forEach(([uid, data]) => {
+            if (!latest[uid] || t > latest[uid].timestamp) {
+              latest[uid] = { data, timestamp: t };
+            }
+          });
+          return latest;
+        }, {})
+      ).map(([uid, { data, timestamp }]) => ({ uid, data, timestamp }))
     : [];
 
   return (

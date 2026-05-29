@@ -100,7 +100,7 @@ function GameContent() {
       />
 
       {/* UI overlaid at top */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
         {outOfZone && (
           <div className="bg-game-red text-white text-center py-2 text-sm font-bold">
             Du verlässt die Spielzone! Kehre zurück.
@@ -111,7 +111,7 @@ function GameContent() {
             Du wurdest gefangen!
           </div>
         )}
-        <div className="bg-game-bg/95 backdrop-blur px-4 py-3 border-b border-game-border">
+        <div style={{ backgroundColor: 'rgba(13,17,23,0.97)', borderBottom: '1px solid #30363D' }} className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
               {isSeeker
@@ -127,7 +127,7 @@ function GameContent() {
             )}
           </div>
         </div>
-        <div className="text-game-muted text-xs text-center py-1 bg-game-bg/80">
+        <div style={{ backgroundColor: 'rgba(13,17,23,0.75)' }} className="text-game-muted text-xs text-center py-1">
           Halte die App geöffnet für GPS-Tracking
         </div>
       </div>
