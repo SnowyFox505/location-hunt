@@ -1,12 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ref, set } from 'firebase/database';
+import { ref, set, onValue } from 'firebase/database';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
 import { useSession } from '../hooks/useSession';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
+
+function KickModal({ reason, sessionCode, onConfirm }) {
+  const isDisconnect = reason === 'disconnect';
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div className="bg-game-card border border-game-border rounded-2xl p-6 w-full max-w-sm text-center">
+        <div className="text-4xl mb-3">{isDisconnect ? '📶' : '🚪'}</div>
+        <h2 className="text-game-text text-xl font-bold mb-2">
+          {isDisconnect ? 'Verbindung unterbrochen' : 'Lobby geschlossen'}
+        </h2>
+        <p className="text-game-muted text-sm mb-6">
+          {isDisconnect
+            ? 'Die Verbindung zum Server wurde unterbrochen. Du kannst versuchen, der Session erneut beizutreten.'
+            : 'Der Host hat die Lobby geschlossen.'}
+        </p>
+        {isDisconnect && sessionCode && (
+          <p className="text-game-blue text-sm font-bold mb-4">Code: {sessionCode}</p>
+        )}
+        <Button onClick={onConfirm}>Zur Startseite</Button>
+      </div>
+    </div>
+  );
+}
 
 function LobbyContent() {
   const { sessionId } = useParams();
@@ -16,21 +39,48 @@ function LobbyContent() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [kickReason, setKickReason] = useState(null);
+  const connectedRef = useRef(false);
+
+  // Monitor Firebase connection state for disconnect detection
+  useEffect(() => {
+    const connRef = ref(db, '.info/connected');
+    const unsub = onValue(connRef, (snap) => {
+      const isConnected = snap.val();
+      if (connectedRef.current && !isConnected && !kickReason) {
+        setKickReason('disconnect');
+      }
+      connectedRef.current = !!isConnected;
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (!loading && meta?.status === 'hiding') navigate(`/game/${sessionId}/hiding`, { replace: true });
     if (!loading && meta?.status === 'playing') navigate(`/game/${sessionId}/play`, { replace: true });
     if (!loading && meta?.status === 'ended') navigate(`/game/${sessionId}/end`, { replace: true });
-    // Host has closed the lobby — kick non-host players to home
     if (!loading && meta?.status === 'closed' && meta?.host !== user.uid) {
-      navigate('/home', { replace: true });
+      setKickReason('closed');
     }
-    // Session deleted or missing
-    if (!loading && !meta) navigate('/home', { replace: true });
+    if (!loading && !meta && connectedRef.current) {
+      setKickReason('disconnect');
+    }
   }, [meta?.status, loading]);
 
-  if (loading || !meta) {
+  if (loading || (!meta && !kickReason)) {
     return <div className="flex items-center justify-center h-full bg-game-bg"><div className="w-8 h-8 border-2 border-game-blue border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  if (kickReason) {
+    return (
+      <div className="flex items-center justify-center h-full bg-game-bg">
+        <KickModal
+          reason={kickReason}
+          sessionCode={meta?.code}
+          onConfirm={() => navigate('/home', { replace: true })}
+        />
+      </div>
+    );
   }
 
   const isHost = meta.host === user.uid;
