@@ -20,12 +20,8 @@ function HidingContent() {
   useGPS(sessionId, user.uid, true);
 
   useEffect(() => {
-    if (!loading && meta?.status === 'playing') {
-      navigate(`/game/${sessionId}/play`, { replace: true });
-    }
-    if (!loading && meta?.status === 'ended') {
-      navigate(`/game/${sessionId}/end`, { replace: true });
-    }
+    if (!loading && meta?.status === 'playing') navigate(`/game/${sessionId}/play`, { replace: true });
+    if (!loading && meta?.status === 'ended') navigate(`/game/${sessionId}/end`, { replace: true });
   }, [meta?.status, loading]);
 
   async function handleCountdownComplete() {
@@ -44,8 +40,13 @@ function HidingContent() {
     : null;
 
   return (
-    <div className="map-screen flex flex-col">
-      <div className="z-10 bg-game-bg/95 backdrop-blur px-4 py-4 shrink-0 text-center border-b border-game-border">
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {/* Map fills entire screen */}
+      <GameMap center={zoneCenter} zone={zone} players={[]} myUid={user.uid} showPlayers={false} />
+
+      {/* UI overlaid at top */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}
+           className="bg-game-bg/95 backdrop-blur px-4 py-4 text-center border-b border-game-border">
         {isSeeker ? (
           <>
             <p className="text-game-muted text-xs mb-1">Hider verstecken sich</p>
@@ -63,16 +64,6 @@ function HidingContent() {
             <p className="text-game-muted text-xs mt-1">Halte die App geöffnet für GPS-Tracking!</p>
           </>
         )}
-      </div>
-
-      <div className="flex-1 relative min-h-0">
-        <GameMap
-          center={zoneCenter}
-          zone={zone}
-          players={[]}
-          myUid={user.uid}
-          showPlayers={false}
-        />
       </div>
     </div>
   );
