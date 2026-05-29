@@ -65,7 +65,7 @@ function HidingContent() {
         )}
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 relative min-h-0">
         <GameMap
           center={zoneCenter}
           zone={zone}

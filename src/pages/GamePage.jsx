@@ -155,7 +155,7 @@ function GameContent() {
         Halte die App geöffnet für GPS-Tracking
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 relative min-h-0">
         <GameMap
           center={mapCenter}
           zone={zone}

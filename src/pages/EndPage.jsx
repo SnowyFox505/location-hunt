@@ -1,4 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { ref, set } from 'firebase/database';
+import { db } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
 import { useSession } from '../hooks/useSession';
 import { format } from 'date-fns';
@@ -10,6 +13,7 @@ function EndContent() {
   const { sessionId } = useParams();
   const { meta, players, game, stats, loading } = useGame();
   const { resetSession } = useSession();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   if (loading || !stats) {
@@ -105,7 +109,12 @@ function EndContent() {
 
       <div className="flex flex-col gap-3">
         <Button onClick={handleNewRound}>Neue Runde</Button>
-        <Button variant="ghost" onClick={() => navigate('/home')}>Beenden</Button>
+        <Button variant="ghost" onClick={async () => {
+          if (meta?.host === user?.uid) {
+            await set(ref(db, `sessions/${sessionId}/meta/status`), 'closed');
+          }
+          navigate('/home');
+        }}>Beenden</Button>
       </div>
     </div>
   );

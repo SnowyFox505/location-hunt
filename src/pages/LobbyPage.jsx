@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ref, set } from 'firebase/database';
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
 import { useSession } from '../hooks/useSession';
@@ -19,6 +21,12 @@ function LobbyContent() {
     if (!loading && meta?.status === 'hiding') navigate(`/game/${sessionId}/hiding`, { replace: true });
     if (!loading && meta?.status === 'playing') navigate(`/game/${sessionId}/play`, { replace: true });
     if (!loading && meta?.status === 'ended') navigate(`/game/${sessionId}/end`, { replace: true });
+    // Host has closed the lobby — kick non-host players to home
+    if (!loading && meta?.status === 'closed' && meta?.host !== user.uid) {
+      navigate('/home', { replace: true });
+    }
+    // Session deleted or missing
+    if (!loading && !meta) navigate('/home', { replace: true });
   }, [meta?.status, loading]);
 
   if (loading || !meta) {
@@ -47,10 +55,21 @@ function LobbyContent() {
     }
   }
 
+  async function handleHostLeave() {
+    // Mark session as closed so all clients navigate away
+    await set(ref(db, `sessions/${sessionId}/meta/status`), 'closed');
+    navigate('/home', { replace: true });
+  }
+
   return (
     <div className="flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/home')} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
+        <button
+          onClick={isHost ? handleHostLeave : () => navigate('/home')}
+          className="text-game-muted hover:text-game-text cursor-pointer text-xl"
+        >
+          ←
+        </button>
         <h1 className="text-game-text font-bold text-xl">Lobby</h1>
       </div>
 
@@ -122,9 +141,9 @@ function LobbyContent() {
 
       <div className="mt-4">
         {isHost ? (
-          <div>
+          <div className="flex flex-col gap-2">
             {!canStart && (
-              <p className="text-game-muted text-xs text-center mb-2">Mindestens 1 Hider und 1 Seeker erforderlich</p>
+              <p className="text-game-muted text-xs text-center mb-1">Mindestens 1 Hider und 1 Seeker erforderlich</p>
             )}
             <Button onClick={handleStart} disabled={!canStart || starting}>
               {starting ? 'Spiel wird gestartet...' : 'Spiel starten'}
