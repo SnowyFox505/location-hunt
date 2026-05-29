@@ -31,9 +31,10 @@ export function GameProvider({ sessionId, children }) {
   const game = session?.game || null;
   const stats = session?.stats || null;
   const pings = session?.pings || null;
+  const catchRequests = session?.catchRequests || null;
 
   return (
-    <GameContext.Provider value={{ session, meta, players, zone, game, stats, pings, loading }}>
+    <GameContext.Provider value={{ session, meta, players, zone, game, stats, pings, catchRequests, loading }}>
       {children}
     </GameContext.Provider>
   );
