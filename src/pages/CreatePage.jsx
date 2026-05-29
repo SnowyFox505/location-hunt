@@ -240,7 +240,7 @@ export default function CreatePage() {
 
   return (
     <div className="flex flex-col min-h-full bg-game-bg max-w-sm mx-auto w-full">
-      <div className="px-4 py-6 flex items-center gap-3 border-b border-game-border shrink-0">
+      <div className="pt-safe px-4 py-6 flex items-center gap-3 border-b border-game-border shrink-0">
         <button onClick={() => step === 2 ? setStep(1) : navigate('/home')} className="text-game-muted hover:text-game-text cursor-pointer">
           ←
         </button>
@@ -311,7 +311,7 @@ export default function CreatePage() {
 
       {step === 2 && (
         <div className="fixed inset-0 flex flex-col bg-game-bg z-50">
-          <div className="px-4 py-3 flex items-center gap-3 border-b border-game-border shrink-0 bg-game-bg">
+          <div className="pt-safe px-4 py-3 flex items-center gap-3 border-b border-game-border shrink-0 bg-game-bg">
             <button onClick={() => setStep(1)} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
             <h1 className="text-game-text font-bold text-lg">Zone zeichnen</h1>
           </div>

@@ -48,7 +48,7 @@ function HidingContent() {
 
       {/* UI overlaid at top */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000, backgroundColor: 'rgba(13,17,23,0.97)', borderBottom: '1px solid #30363D' }}
-           className="px-4 py-4 text-center">
+           className="pt-safe px-4 py-4 text-center">
         {isSeeker ? (
           <>
             <p className="text-game-muted text-xs mb-1">Hider verstecken sich</p>

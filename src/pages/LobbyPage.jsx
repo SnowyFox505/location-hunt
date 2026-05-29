@@ -119,7 +119,7 @@ function LobbyContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
+    <div className="pt-safe flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={isHost ? handleHostLeave : () => navigate('/home')}

@@ -13,7 +13,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
+    <div className="pt-safe flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-game-blue rounded-xl flex items-center justify-center">

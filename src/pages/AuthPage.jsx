@@ -42,7 +42,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-full bg-game-bg px-4 py-8">
+    <div className="pt-safe flex items-center justify-center min-h-full bg-game-bg px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-game-blue rounded-2xl flex items-center justify-center mx-auto mb-4">

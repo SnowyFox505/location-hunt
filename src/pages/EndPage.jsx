@@ -35,7 +35,7 @@ function EndContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full overflow-y-auto">
+    <div className="pt-safe flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full overflow-y-auto">
       <div className="text-center py-8">
         <div className={`text-6xl mb-4`}>{seekersWon ? '🎯' : '🏃'}</div>
         <h1 className={`text-3xl font-black ${seekersWon ? 'text-game-red' : 'text-game-green'}`}>

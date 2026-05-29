@@ -32,6 +32,11 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Push content below status bar / notch / Dynamic Island */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .leaflet-container {
   background: #1a1f2e;
 }

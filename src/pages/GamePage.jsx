@@ -217,7 +217,7 @@ function GameContent() {
       />
 
       {/* Top UI */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }} className="pt-safe">
         {outOfZone && !isCaught && (
           <div className="bg-game-red text-white text-center py-2 text-sm font-bold">
             Du verlässt die Spielzone! Kehre zurück.

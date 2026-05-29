@@ -46,7 +46,7 @@ function RoleRevealContent() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-full bg-game-bg"
+      className="pt-safe flex flex-col items-center justify-center h-full bg-game-bg"
       style={{ userSelect: 'none' }}
     >
       <p className="text-game-muted text-sm uppercase tracking-widest mb-6">Du bist</p>
