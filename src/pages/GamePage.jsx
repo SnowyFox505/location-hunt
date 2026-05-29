@@ -18,7 +18,8 @@ function GameContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [outOfZone, setOutOfZone] = useState(false);
-  const catchCheckRef = useRef(null);
+  const [catchableHider, setCatchableHider] = useState(null);
+  const [catching, setCatching] = useState(false);
 
   const myPlayer = players.find((p) => p.uid === user.uid);
   const isSeeker = myPlayer?.role === 'seeker';
@@ -49,25 +50,53 @@ function GameContent() {
     });
   }
 
+  // Range check: find nearest uncaught hider within catch radius → show button
   useEffect(() => {
-    if (!isSeeker || !position || !meta?.settings) return;
-    catchCheckRef.current = setInterval(async () => {
-      const uncaught = players.filter((p) => p.role === 'hider' && !p.caught && p.lat != null && p.lng != null);
+    if (!isSeeker || !position || !meta?.settings) {
+      setCatchableHider(null);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const uncaught = players.filter(
+        (p) => p.role === 'hider' && !p.caught && p.lat != null && p.lng != null
+      );
+
+      let nearest = null;
+      let nearestDist = Infinity;
       for (const hider of uncaught) {
         const dist = haversine(position.lat, position.lng, hider.lat, hider.lng);
-        if (dist < meta.settings.catchRadius) {
-          const now = Date.now();
-          await update(ref(db, `sessions/${sessionId}/players/${hider.uid}`), {
-            caught: true, caughtAt: now, caughtBy: user.uid,
-          });
-          const allHiders = players.filter((p) => p.role === 'hider');
-          const allCaught = allHiders.every((p) => p.uid === hider.uid || p.caught);
-          if (allCaught) await handleGameEnd('seeker');
+        if (dist < meta.settings.catchRadius && dist < nearestDist) {
+          nearest = hider;
+          nearestDist = dist;
         }
       }
-    }, 2000);
-    return () => clearInterval(catchCheckRef.current);
+
+      setCatchableHider(nearest ? { ...nearest, distance: Math.round(nearestDist) } : null);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [isSeeker, position, players, meta?.settings]);
+
+  async function handleCatch() {
+    if (!catchableHider || catching) return;
+    setCatching(true);
+    try {
+      const now = Date.now();
+      await update(ref(db, `sessions/${sessionId}/players/${catchableHider.uid}`), {
+        caught: true,
+        caughtAt: now,
+        caughtBy: user.uid,
+      });
+      setCatchableHider(null);
+
+      const allHiders = players.filter((p) => p.role === 'hider');
+      const allCaught = allHiders.every((p) => p.uid === catchableHider.uid || p.caught);
+      if (allCaught) await handleGameEnd('seeker');
+    } finally {
+      setCatching(false);
+    }
+  }
 
   useEffect(() => {
     if (!position || !zone) return;
@@ -75,13 +104,16 @@ function GameContent() {
   }, [position, zone]);
 
   if (loading || !meta) {
-    return <div className="flex items-center justify-center h-full bg-game-bg"><div className="w-8 h-8 border-2 border-game-blue border-t-transparent rounded-full animate-spin" /></div>;
+    return (
+      <div className="flex items-center justify-center h-full bg-game-bg">
+        <div className="w-8 h-8 border-2 border-game-blue border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   const hiders = players.filter((p) => p.role === 'hider');
   const caughtCount = hiders.filter((p) => p.caught).length;
 
-  // Hiders currently outside the zone — visible live to all seekers (penalty)
   const outOfZoneHiders = zone
     ? hiders.filter((p) => !p.caught && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, zone))
     : [];
@@ -101,7 +133,6 @@ function GameContent() {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-      {/* Map fills entire screen */}
       <GameMap
         center={mapCenter}
         zone={zone}
@@ -113,7 +144,7 @@ function GameContent() {
         showPings={isSeeker}
       />
 
-      {/* UI overlaid at top */}
+      {/* Top UI overlay */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
         {outOfZone && (
           <div className="bg-game-red text-white text-center py-2 text-sm font-bold">
@@ -121,7 +152,8 @@ function GameContent() {
           </div>
         )}
         {isCaught && !isSeeker && (
-          <div className="bg-red-900/90 border-b border-game-red px-4 py-2 text-game-red text-sm text-center font-semibold">
+          <div style={{ backgroundColor: 'rgba(127,29,29,0.95)', borderBottom: '1px solid #EF4444' }}
+               className="px-4 py-2 text-game-red text-sm text-center font-semibold">
             Du wurdest gefangen!
           </div>
         )}
@@ -131,7 +163,9 @@ function GameContent() {
               {isSeeker
                 ? <span className="text-game-red text-xs font-bold uppercase tracking-wide">Seeker</span>
                 : <span className="text-game-green text-xs font-bold uppercase tracking-wide">{isCaught ? 'Gefangen' : 'Versteckt'}</span>}
-              {isSeeker && <p className="text-game-muted text-xs mt-0.5">{caughtCount} von {hiders.length} gefangen</p>}
+              {isSeeker && (
+                <p className="text-game-muted text-xs mt-0.5">{caughtCount} von {hiders.length} gefangen</p>
+              )}
             </div>
             {game?.endsAt && (
               <div className="text-right">
@@ -145,6 +179,37 @@ function GameContent() {
           Halte die App geöffnet für GPS-Tracking
         </div>
       </div>
+
+      {/* CATCH BUTTON — appears when seeker is close enough to a hider */}
+      {isSeeker && catchableHider && (
+        <div style={{ position: 'absolute', bottom: 32, left: 16, right: 16, zIndex: 1000 }}>
+          <button
+            onClick={handleCatch}
+            disabled={catching}
+            style={{
+              width: '100%',
+              padding: '20px 24px',
+              backgroundColor: catching ? '#991B1B' : '#EF4444',
+              borderRadius: '20px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 0 40px rgba(239,68,68,0.5), 0 4px 20px rgba(0,0,0,0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'background-color 0.15s',
+            }}
+          >
+            <span style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px' }}>
+              {catching ? 'Wird gefangen...' : '🎯 FANGEN!'}
+            </span>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
+              {catchableHider.name} — {catchableHider.distance} m entfernt
+            </span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
