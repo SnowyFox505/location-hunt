@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
 import { useGPS } from '../hooks/useGPS';
+import { useWakeLock } from '../hooks/useWakeLock';
 import GameMap from '../components/Map/GameMap';
 import Countdown from '../components/UI/Countdown';
 
@@ -18,6 +19,7 @@ function HidingContent() {
   const isSeeker = myPlayer?.role === 'seeker';
 
   useGPS(sessionId, user.uid, true);
+  useWakeLock(true);
 
   useEffect(() => {
     if (!loading && meta?.status === 'playing') navigate(`/game/${sessionId}/play`, { replace: true });

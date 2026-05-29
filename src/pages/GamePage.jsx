@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
 import { useGPS } from '../hooks/useGPS';
 import { usePings } from '../hooks/usePings';
+import { useWakeLock } from '../hooks/useWakeLock';
 import { haversine } from '../utils/haversine';
 import { pointInPolygon } from '../utils/pointInPolygon';
 import { db } from '../firebase';
@@ -25,6 +26,7 @@ function GameContent() {
 
   const { position } = useGPS(sessionId, user.uid, true);
   usePings(sessionId, players, user.uid, myPlayer?.role, meta?.status === 'playing');
+  useWakeLock(true);
 
   useEffect(() => {
     if (!loading && meta?.status === 'ended') navigate(`/game/${sessionId}/end`, { replace: true });
