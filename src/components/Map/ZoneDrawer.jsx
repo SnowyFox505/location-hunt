@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet-draw';
 
@@ -47,7 +47,12 @@ function DrawControl({ onPolygonDrawn }) {
   return null;
 }
 
-export default function ZoneDrawer({ center, polygon, onPolygonDrawn }) {
+// useMap must be called inside MapContainer — small wrapper component
+function DrawControlWrapper({ onPolygonDrawn }) {
+  return <DrawControl onPolygonDrawn={onPolygonDrawn} />;
+}
+
+export default function ZoneDrawer({ center, polygon, onPolygonDrawn, gpsPosition }) {
   return (
     <MapContainer
       center={center || [51.505, -0.09]}
@@ -60,7 +65,23 @@ export default function ZoneDrawer({ center, polygon, onPolygonDrawn }) {
         subdomains="abcd"
         maxZoom={19}
       />
-      <DrawControl onPolygonDrawn={onPolygonDrawn} />
+      <DrawControlWrapper onPolygonDrawn={onPolygonDrawn} />
+
+      {/* Live GPS dot */}
+      {gpsPosition && (
+        <CircleMarker
+          center={gpsPosition}
+          radius={8}
+          pathOptions={{ color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 1, weight: 2 }}
+        >
+          <CircleMarker
+            center={gpsPosition}
+            radius={16}
+            pathOptions={{ color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 0.2, weight: 0 }}
+          />
+        </CircleMarker>
+      )}
+
       {polygon && polygon.length >= 3 && (
         <Polygon
           positions={polygon.map((p) => [p.lat, p.lng])}

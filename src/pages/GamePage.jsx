@@ -78,9 +78,20 @@ function GameContent() {
 
   const hiders = players.filter((p) => p.role === 'hider');
   const caughtCount = hiders.filter((p) => p.caught).length;
+
+  // Hiders currently outside the zone — visible live to all seekers (penalty)
+  const outOfZoneHiders = zone
+    ? hiders.filter((p) => !p.caught && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, zone))
+    : [];
+  const outOfZoneUids = outOfZoneHiders.map((p) => p.uid);
+
   const mapPlayers = isSeeker
-    ? [...players.filter((p) => p.role === 'seeker'), ...players.filter((p) => p.role === 'hider' && p.caught)]
+    ? [
+        ...players.filter((p) => p.role === 'seeker'),
+        ...players.filter((p) => p.role === 'hider' && (p.caught || outOfZoneUids.includes(p.uid))),
+      ]
     : players.filter((p) => p.uid === user.uid);
+
   const zoneCenter = zone && zone.length > 0
     ? [zone.reduce((s, p) => s + p.lat, 0) / zone.length, zone.reduce((s, p) => s + p.lng, 0) / zone.length]
     : null;
@@ -93,6 +104,7 @@ function GameContent() {
         center={mapCenter}
         zone={zone}
         players={mapPlayers}
+        outOfZonePlayers={outOfZoneUids}
         pings={isSeeker ? pings : null}
         myUid={user.uid}
         showPlayers

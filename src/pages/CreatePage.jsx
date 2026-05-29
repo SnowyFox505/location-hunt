@@ -164,6 +164,7 @@ export default function CreatePage() {
                 center={gpsCenter}
                 polygon={polygon}
                 onPolygonDrawn={setPolygon}
+                gpsPosition={gpsCenter}
               />
             ) : (
               <div className="flex items-center justify-center h-full text-game-muted">GPS wird geladen...</div>

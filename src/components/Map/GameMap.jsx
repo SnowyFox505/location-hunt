@@ -11,7 +11,7 @@ function RecenterMap({ center }) {
   return null;
 }
 
-export default function GameMap({ center, zoom = 17, zone, players = [], pings = null, myUid, showPlayers = true, showPings = false }) {
+export default function GameMap({ center, zoom = 17, zone, players = [], outOfZonePlayers = [], pings = null, myUid, showPlayers = true, showPings = false }) {
   // Keep only the latest ping per hider (replaces old one when new ping arrives)
   const pingEntries = pings
     ? Object.entries(
@@ -48,7 +48,7 @@ export default function GameMap({ center, zoom = 17, zone, players = [], pings =
         />
       )}
       {showPlayers && players.map((p) => (
-        <PlayerMarker key={p.uid} player={p} isMe={p.uid === myUid} />
+        <PlayerMarker key={p.uid} player={p} isMe={p.uid === myUid} outOfZone={outOfZonePlayers.includes(p.uid)} />
       ))}
       {showPings && pingEntries.map(({ uid, data, timestamp }) => (
         <PingMarker key={`${uid}-${timestamp}`} uid={uid} data={data} timestamp={timestamp} />
