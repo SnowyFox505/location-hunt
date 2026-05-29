@@ -3,12 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../hooks/useSession';
 import Button from '../components/UI/Button';
-import Input from '../components/UI/Input';
 import Card from '../components/UI/Card';
 
 export default function JoinPage() {
   const { code: urlCode } = useParams();
-  const [tab, setTab] = useState(urlCode ? 'link' : 'code');
   const [code, setCode] = useState(urlCode || '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,10 +15,7 @@ export default function JoinPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (urlCode) {
-      setCode(urlCode);
-      setTab('link');
-    }
+    if (urlCode) setCode(urlCode.toUpperCase());
   }, [urlCode]);
 
   async function handleJoin() {
@@ -45,38 +40,17 @@ export default function JoinPage() {
       </div>
 
       <Card>
-        <div className="flex mb-6 bg-game-bg rounded-xl p-1">
-          {['code', 'link'].map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t); setError(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
-                tab === t ? 'bg-game-blue text-white' : 'text-game-muted hover:text-game-text'
-              }`}
-            >
-              {t === 'code' ? 'Per Code' : 'Per Link'}
-            </button>
-          ))}
-        </div>
-
         <div className="flex flex-col gap-4">
-          {tab === 'code' ? (
-            <Input
-              label="Session-Code"
+          <div className="flex flex-col gap-1">
+            <label className="text-game-muted text-sm font-medium">Session-Code</label>
+            <input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
               placeholder="XK92PL"
               autoComplete="off"
-              className="tracking-[0.3em] text-center text-xl font-bold"
+              className="bg-game-bg border border-game-border rounded-lg px-4 py-3 text-game-text tracking-[0.3em] text-center text-2xl font-bold placeholder-game-muted focus:outline-none focus:border-game-blue min-h-[64px]"
             />
-          ) : (
-            <div className="flex flex-col gap-1">
-              <label className="text-game-muted text-sm font-medium">Code aus Link</label>
-              <div className="bg-game-bg border border-game-border rounded-lg px-4 py-3 text-game-text font-bold tracking-[0.3em] text-center text-xl">
-                {code || '—'}
-              </div>
-            </div>
-          )}
+          </div>
 
           {error && (
             <div className="bg-red-900/30 border border-game-red rounded-lg px-4 py-3 text-game-red text-sm">
