@@ -52,8 +52,10 @@ function LobbyContent() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
-  const [randomRoles, setRandomRoles] = useState(false);
   const [kickReason, setKickReason] = useState(null);
+
+  // Read from Firebase so all clients stay in sync
+  const randomRoles = !!meta?.randomRoles;
   const connectedRef = useRef(false);
 
   useEffect(() => {
@@ -167,7 +169,7 @@ function LobbyContent() {
                 </p>
               </div>
               <button
-                onClick={() => setRandomRoles((v) => !v)}
+                onClick={() => set(ref(db, `sessions/${sessionId}/meta/randomRoles`), !randomRoles)}
                 className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${randomRoles ? 'bg-game-blue' : 'bg-game-border'}`}
               >
                 <span
