@@ -1,4 +1,4 @@
-import { ref, set, update, push, get } from 'firebase/database';
+import { ref, set, update, push, get, query, orderByChild, equalTo } from 'firebase/database';
 import { db } from '../firebase';
 import { generateUniqueCode } from '../utils/sessionCode';
 
@@ -38,24 +38,23 @@ export function useSession() {
       zone: { polygon: zone },
     });
 
-    // Store code → sessionId lookup so joining doesn't need list access
-    await set(ref(db, `sessionCodes/${code}`), sessionId);
-
     return { sessionId, code };
   }
 
   async function joinSession(code, uid, displayName) {
     const upperCode = code.toUpperCase();
+    const q = query(ref(db, 'sessions'), orderByChild('meta/code'), equalTo(upperCode));
+    const snap = await get(q);
+    if (!snap.exists()) throw new Error('Session nicht gefunden.');
 
-    // Look up sessionId via the codes table (no list read needed)
-    const codeSnap = await get(ref(db, `sessionCodes/${upperCode}`));
-    if (!codeSnap.exists()) throw new Error('Session nicht gefunden.');
+    let sessionId = null;
+    let sessionData = null;
+    snap.forEach((child) => {
+      sessionId = child.key;
+      sessionData = child.val();
+    });
 
-    const sessionId = codeSnap.val();
-    const sessionSnap = await get(ref(db, `sessions/${sessionId}`));
-    if (!sessionSnap.exists()) throw new Error('Session nicht gefunden.');
-
-    const sessionData = sessionSnap.val();
+    if (!sessionData) throw new Error('Session nicht gefunden.');
     if (sessionData.meta.status !== 'waiting') throw new Error('Das Spiel wurde bereits gestartet.');
 
     if (!sessionData.players?.[uid]) {
