@@ -111,8 +111,8 @@ export default function CreatePage() {
               onChange={(e) => setSettings((s) => ({ ...s, pingInterval: Number(e.target.value) }))}
               className="w-full bg-game-bg border border-game-border rounded-lg px-4 py-3 text-game-text focus:outline-none focus:border-game-blue min-h-[48px]"
             >
-              {[2, 3, 4, 5].map((v) => (
-                <option key={v} value={v}>{v} Minuten</option>
+              {[1, 2, 3, 4, 5].map((v) => (
+                <option key={v} value={v}>{v} Minute{v > 1 ? 'n' : ''}</option>
               ))}
             </select>
             <p className="text-game-muted text-xs mt-2">Alle X Minuten erhalten Seeker einen Ping mit Hider-Positionen.</p>

@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import CreatePage from './pages/CreatePage';
 import JoinPage from './pages/JoinPage';
 import LobbyPage from './pages/LobbyPage';
+import RoleRevealPage from './pages/RoleRevealPage';
 import HidingPage from './pages/HidingPage';
 import GamePage from './pages/GamePage';
 import EndPage from './pages/EndPage';
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/join" element={<ProtectedRoute><JoinPage /></ProtectedRoute>} />
           <Route path="/join/:code" element={<ProtectedRoute><JoinPage /></ProtectedRoute>} />
           <Route path="/lobby/:sessionId" element={<ProtectedRoute><LobbyPage /></ProtectedRoute>} />
+          <Route path="/game/:sessionId/role-reveal" element={<ProtectedRoute><RoleRevealPage /></ProtectedRoute>} />
           <Route path="/game/:sessionId/hiding" element={<ProtectedRoute><HidingPage /></ProtectedRoute>} />
           <Route path="/game/:sessionId/play" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
           <Route path="/game/:sessionId/end" element={<ProtectedRoute><EndPage /></ProtectedRoute>} />

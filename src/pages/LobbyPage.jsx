@@ -31,6 +31,19 @@ function KickModal({ reason, sessionCode, onConfirm }) {
   );
 }
 
+function assignRandomRoles(players) {
+  const uids = players.map((p) => p.uid);
+  const shuffled = [...uids].sort(() => Math.random() - 0.5);
+  const roles = {};
+  // At least 1 seeker — first player in shuffled list gets seeker, others hider
+  // For larger groups: roughly 1 seeker per 3 players (min 1)
+  const seekerCount = Math.max(1, Math.floor(uids.length / 3));
+  shuffled.forEach((uid, i) => {
+    roles[uid] = i < seekerCount ? 'seeker' : 'hider';
+  });
+  return roles;
+}
+
 function LobbyContent() {
   const { sessionId } = useParams();
   const { meta, players, loading } = useGame();
@@ -39,32 +52,26 @@ function LobbyContent() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [randomRoles, setRandomRoles] = useState(false);
   const [kickReason, setKickReason] = useState(null);
   const connectedRef = useRef(false);
 
-  // Monitor Firebase connection state for disconnect detection
   useEffect(() => {
     const connRef = ref(db, '.info/connected');
     const unsub = onValue(connRef, (snap) => {
       const isConnected = snap.val();
-      if (connectedRef.current && !isConnected && !kickReason) {
-        setKickReason('disconnect');
-      }
+      if (connectedRef.current && !isConnected && !kickReason) setKickReason('disconnect');
       connectedRef.current = !!isConnected;
     });
     return unsub;
   }, []);
 
   useEffect(() => {
-    if (!loading && meta?.status === 'hiding') navigate(`/game/${sessionId}/hiding`, { replace: true });
+    if (!loading && meta?.status === 'hiding') navigate(`/game/${sessionId}/role-reveal`, { replace: true });
     if (!loading && meta?.status === 'playing') navigate(`/game/${sessionId}/play`, { replace: true });
     if (!loading && meta?.status === 'ended') navigate(`/game/${sessionId}/end`, { replace: true });
-    if (!loading && meta?.status === 'closed' && meta?.host !== user.uid) {
-      setKickReason('closed');
-    }
-    if (!loading && !meta && connectedRef.current) {
-      setKickReason('disconnect');
-    }
+    if (!loading && meta?.status === 'closed' && meta?.host !== user.uid) setKickReason('closed');
+    if (!loading && !meta && connectedRef.current) setKickReason('disconnect');
   }, [meta?.status, loading]);
 
   if (loading || (!meta && !kickReason)) {
@@ -87,7 +94,7 @@ function LobbyContent() {
   const inviteLink = `${window.location.origin}/join/${meta.code}`;
   const hiders = players.filter((p) => p.role === 'hider');
   const seekers = players.filter((p) => p.role === 'seeker');
-  const canStart = hiders.length >= 1 && seekers.length >= 1;
+  const canStart = randomRoles ? players.length >= 2 : (hiders.length >= 1 && seekers.length >= 1);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(inviteLink);
@@ -98,15 +105,15 @@ function LobbyContent() {
   async function handleStart() {
     setStarting(true);
     try {
-      await startGame(sessionId, meta.settings);
-      navigate(`/game/${sessionId}/hiding`);
+      const roleAssignments = randomRoles ? assignRandomRoles(players) : null;
+      await startGame(sessionId, meta.settings, roleAssignments);
+      navigate(`/game/${sessionId}/role-reveal`);
     } catch {
       setStarting(false);
     }
   }
 
   async function handleHostLeave() {
-    // Mark session as closed so all clients navigate away
     await set(ref(db, `sessions/${sessionId}/meta/status`), 'closed');
     navigate('/home', { replace: true });
   }
@@ -117,9 +124,7 @@ function LobbyContent() {
         <button
           onClick={isHost ? handleHostLeave : () => navigate('/home')}
           className="text-game-muted hover:text-game-text cursor-pointer text-xl"
-        >
-          ←
-        </button>
+        >←</button>
         <h1 className="text-game-text font-bold text-xl">Lobby</h1>
       </div>
 
@@ -144,12 +149,35 @@ function LobbyContent() {
         </Card>
 
         <Card>
-          <div className="flex justify-between text-game-muted text-xs mb-1">
+          <div className="flex justify-between text-game-muted text-xs">
             <span>⏱ {meta.settings?.gameDuration} Min</span>
             <span>📡 Ping alle {meta.settings?.pingInterval} Min</span>
-            <span>🎯 {meta.settings?.catchRadius} m Radius</span>
+            <span>🎯 {meta.settings?.catchRadius} m</span>
           </div>
         </Card>
+
+        {/* Random roles toggle — host only */}
+        {isHost && (
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-game-text text-sm font-semibold">Zufällige Rollen</p>
+                <p className="text-game-muted text-xs mt-0.5">
+                  {randomRoles ? 'Rollen werden beim Start zufällig vergeben' : 'Rollen manuell zuweisen'}
+                </p>
+              </div>
+              <button
+                onClick={() => setRandomRoles((v) => !v)}
+                className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${randomRoles ? 'bg-game-blue' : 'bg-game-border'}`}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow"
+                  style={{ transform: randomRoles ? 'translateX(24px)' : 'translateX(0)' }}
+                />
+              </button>
+            </div>
+          </Card>
+        )}
 
         <Card>
           <h2 className="text-game-text font-bold mb-3">Spieler ({players.length})</h2>
@@ -167,7 +195,11 @@ function LobbyContent() {
                   </span>
                 </div>
 
-                {isHost ? (
+                {randomRoles ? (
+                  <span className="text-xs font-semibold px-2 py-1 rounded-full border border-game-border text-game-muted">
+                    ???
+                  </span>
+                ) : isHost ? (
                   <select
                     value={p.role || 'hider'}
                     onChange={(e) => setPlayerRole(sessionId, p.uid, e.target.value)}
@@ -193,7 +225,9 @@ function LobbyContent() {
         {isHost ? (
           <div className="flex flex-col gap-2">
             {!canStart && (
-              <p className="text-game-muted text-xs text-center mb-1">Mindestens 1 Hider und 1 Seeker erforderlich</p>
+              <p className="text-game-muted text-xs text-center mb-1">
+                {randomRoles ? 'Mind. 2 Spieler erforderlich' : 'Mind. 1 Hider und 1 Seeker erforderlich'}
+              </p>
             )}
             <Button onClick={handleStart} disabled={!canStart || starting}>
               {starting ? 'Spiel wird gestartet...' : 'Spiel starten'}

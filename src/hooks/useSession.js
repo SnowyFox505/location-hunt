@@ -74,13 +74,13 @@ export function useSession() {
     return sessionId;
   }
 
-  async function startGame(sessionId, settings) {
+  async function startGame(sessionId, settings, roleAssignments = null) {
     const now = Date.now();
     const hidingMs = settings.hidingDuration * 60 * 1000;
     const gameMs = settings.gameDuration * 60 * 1000;
     const pingMs = settings.pingInterval * 60 * 1000;
 
-    await update(ref(db, `sessions/${sessionId}`), {
+    const patch = {
       'meta/status': 'hiding',
       'game/startedAt': now,
       'game/hidingEndsAt': now + hidingMs,
@@ -88,7 +88,15 @@ export function useSession() {
       'game/nextPingAt': now + hidingMs + pingMs,
       'game/pingInterval': pingMs,
       'game/pingCount': 0,
-    });
+    };
+
+    if (roleAssignments) {
+      Object.entries(roleAssignments).forEach(([uid, role]) => {
+        patch[`players/${uid}/role`] = role;
+      });
+    }
+
+    await update(ref(db, `sessions/${sessionId}`), patch);
   }
 
   async function setPlayerRole(sessionId, uid, role) {
