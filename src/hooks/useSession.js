@@ -19,7 +19,6 @@ export function useSession() {
           gameDuration: settings.gameDuration,
           hidingDuration: settings.hidingDuration,
           pingInterval: settings.pingInterval,
-          catchRadius: settings.catchRadius,
         },
       },
       players: {

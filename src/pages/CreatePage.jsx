@@ -204,7 +204,6 @@ export default function CreatePage() {
     gameDuration: 20,
     hidingDuration: 3,
     pingInterval: 3,
-    catchRadius: 15,
   });
   const [polygon, setPolygon] = useState(null);
   const [gpsCenter, setGpsCenter] = useState(null);
@@ -292,17 +291,6 @@ export default function CreatePage() {
               ))}
             </select>
             <p className="text-game-muted text-xs mt-2">Alle X Minuten erhalten Seeker einen Ping mit Hider-Positionen.</p>
-          </Card>
-
-          <Card>
-            <h2 className="text-game-text font-bold mb-1">Fang-Radius: {settings.catchRadius} m</h2>
-            <p className="text-game-muted text-xs mb-4">Wie nah muss ein Seeker an einen Hider?</p>
-            <input type="range" min={5} max={30} step={5} value={settings.catchRadius}
-              onChange={(e) => setSettings((s) => ({ ...s, catchRadius: Number(e.target.value) }))}
-              className="w-full accent-game-blue" />
-            <div className="flex justify-between text-game-muted text-xs mt-1">
-              <span>5 m</span><span>30 m</span>
-            </div>
           </Card>
 
           <Button onClick={() => setStep(2)}>Weiter: Zone zeichnen →</Button>

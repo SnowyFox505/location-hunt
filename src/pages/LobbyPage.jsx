@@ -154,7 +154,6 @@ function LobbyContent() {
           <div className="flex justify-between text-game-muted text-xs">
             <span>⏱ {meta.settings?.gameDuration} Min</span>
             <span>📡 Ping alle {meta.settings?.pingInterval} Min</span>
-            <span>🎯 {meta.settings?.catchRadius} m</span>
           </div>
         </Card>
 
