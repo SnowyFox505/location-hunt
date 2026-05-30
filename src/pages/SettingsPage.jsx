@@ -16,6 +16,14 @@ const COLORS = [
   '#F43F5E',
 ];
 
+const GLASS = {
+  background: 'rgba(22,27,34,0.72)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  border: '1px solid rgba(48,54,61,0.8)',
+  borderRadius: 16,
+};
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const { profile, saveDisplayName, saveColor, savePhoto, removePhoto } = useUserProfile(user?.uid);
@@ -68,110 +76,143 @@ export default function SettingsPage() {
   const initials = (name || '?').slice(0, 2).toUpperCase();
 
   return (
-    <div className="pt-safe flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          style={{ color: '#8B949E', fontSize: 22, lineHeight: 1 }}
-          className="hover:text-game-text transition-colors cursor-pointer"
-        >
-          ←
-        </button>
-        <h1 className="text-game-text text-xl font-bold">Profil</h1>
-      </div>
+    <div style={{
+      position: 'fixed', inset: 0,
+      backgroundImage: 'url(/bg-home.png)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }}>
+      {/* Dark gradient overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(160deg, rgba(13,17,23,0.45) 0%, rgba(13,17,23,0.72) 50%, rgba(13,17,23,0.92) 100%)',
+        pointerEvents: 'none',
+      }} />
 
-      {/* Avatar preview */}
-      <div className="flex flex-col items-center gap-3 mb-8">
-        <div
-          style={{
-            width: 96,
-            height: 96,
-            borderRadius: '50%',
+      {/* Scrollable content */}
+      <div
+        className="pt-safe relative flex flex-col h-full px-4 py-6 max-w-sm mx-auto w-full overflow-y-auto"
+        style={{ zIndex: 1 }}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            style={{ color: 'rgba(255,255,255,0.7)', fontSize: 22, lineHeight: 1 }}
+            className="cursor-pointer"
+          >
+            ←
+          </button>
+          <h1 className="text-white text-xl font-bold" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+            Profil
+          </h1>
+        </div>
+
+        {/* Avatar preview */}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div style={{
+            width: 96, height: 96, borderRadius: '50%',
             border: `3px solid ${color}`,
             overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#161B22',
-            boxShadow: `0 0 0 4px ${color}22`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(22,27,34,0.85)',
+            boxShadow: `0 0 0 4px ${color}33`,
+            backdropFilter: 'blur(8px)',
+          }}>
+            {photoPreview
+              ? <img src={photoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profilbild" />
+              : <span style={{ color: 'white', fontWeight: 'bold', fontSize: 34 }}>{initials}</span>
+            }
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+              style={{ color: '#60a5fa' }}
+            >
+              {photoPreview ? 'Foto ändern' : 'Foto hochladen'}
+            </button>
+            {photoPreview && (
+              <button
+                onClick={handleRemovePhoto}
+                className="text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                style={{ color: '#f87171' }}
+              >
+                Entfernen
+              </button>
+            )}
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+        </div>
+
+        {/* Name */}
+        <div className="mb-5">
+          <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', fontWeight: 500, display: 'block', marginBottom: 8 }}>
+            Name
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={20}
+            placeholder="Dein Name"
+            style={{
+              ...GLASS,
+              width: '100%', padding: '12px 16px',
+              color: 'white', outline: 'none',
+              caretColor: '#3B82F6',
+              fontSize: '1rem',
+            }}
+            onFocus={(e) => (e.target.style.borderColor = 'rgba(59,130,246,0.8)')}
+            onBlur={(e) => (e.target.style.borderColor = 'rgba(48,54,61,0.8)')}
+          />
+        </div>
+
+        {/* Color picker */}
+        <div className="mb-8">
+          <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', fontWeight: 500, display: 'block', marginBottom: 12 }}>
+            Statusfarbe
+          </label>
+          <div style={{ ...GLASS, padding: '16px', display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                style={{
+                  background: c,
+                  width: 44, height: 44, borderRadius: '50%',
+                  border: c === color ? '3px solid white' : '3px solid transparent',
+                  boxShadow: c === color ? `0 0 0 2px ${c}` : 'none',
+                  transition: 'all 0.15s',
+                  cursor: 'pointer',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            width: '100%',
+            fontWeight: 700,
+            padding: '14px',
+            borderRadius: 14,
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+            background: saved ? '#22C55E' : '#3B82F6',
+            color: 'white',
+            fontSize: '1rem',
+            border: 'none',
+            boxShadow: saved ? '0 4px 20px rgba(34,197,94,0.4)' : '0 4px 20px rgba(59,130,246,0.4)',
+            transition: 'background 0.2s, box-shadow 0.2s',
           }}
         >
-          {photoPreview
-            ? <img src={photoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profilbild" />
-            : <span style={{ color: 'white', fontWeight: 'bold', fontSize: 34 }}>{initials}</span>
-          }
-        </div>
-        <div className="flex gap-4">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="text-game-blue text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            {photoPreview ? 'Foto ändern' : 'Foto hochladen'}
-          </button>
-          {photoPreview && (
-            <button
-              onClick={handleRemovePhoto}
-              className="text-game-red text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              Entfernen
-            </button>
-          )}
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoSelect}
-          className="hidden"
-        />
+          {saved ? '✓ Gespeichert' : saving ? 'Speichert…' : 'Speichern'}
+        </button>
       </div>
-
-      {/* Name */}
-      <div className="mb-6">
-        <label className="text-game-muted text-sm font-medium block mb-2">Name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={20}
-          placeholder="Dein Name"
-          className="w-full bg-game-card border border-game-border rounded-xl px-4 py-3 text-game-text outline-none"
-          style={{ caretColor: '#3B82F6' }}
-          onFocus={(e) => (e.target.style.borderColor = '#3B82F6')}
-          onBlur={(e) => (e.target.style.borderColor = '#30363D')}
-        />
-      </div>
-
-      {/* Color picker */}
-      <div className="mb-8">
-        <label className="text-game-muted text-sm font-medium block mb-3">Statusfarbe</label>
-        <div className="flex flex-wrap gap-3">
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setColor(c)}
-              style={{
-                background: c,
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                border: c === color ? '3px solid white' : '3px solid transparent',
-                boxShadow: c === color ? `0 0 0 2px ${c}` : 'none',
-                transition: 'all 0.15s',
-              }}
-              className="cursor-pointer"
-            />
-          ))}
-        </div>
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full font-bold py-3 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-        style={{ background: saved ? '#22C55E' : '#3B82F6', color: 'white' }}
-      >
-        {saved ? '✓ Gespeichert' : saving ? 'Speichert…' : 'Speichern'}
-      </button>
     </div>
   );
 }
