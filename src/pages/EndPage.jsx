@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ref, set } from 'firebase/database';
 import { db } from '../firebase';
@@ -20,8 +20,16 @@ function EndContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const isHost = meta?.host === user?.uid;
   const seekersWon = stats?.winner === 'seeker';
   const winColor = seekersWon ? '#EF4444' : '#22C55E';
+
+  // When host closes the session, redirect everyone to home
+  useEffect(() => {
+    if (!loading && meta?.status === 'closed') {
+      navigate('/home', { replace: true });
+    }
+  }, [meta?.status, loading]);
 
   // Pre-generate particles once per render
   const particles = useMemo(() => {
@@ -263,9 +271,9 @@ function EndContent() {
           className="flex flex-col gap-3 mt-2"
           style={{ animation: 'fadeInUp 0.4s 1.8s ease both', opacity: 0 }}
         >
-          <Button onClick={handleNewRound}>Neue Runde</Button>
+          {isHost && <Button onClick={handleNewRound}>Neue Runde</Button>}
           <Button variant="ghost" onClick={async () => {
-            if (meta?.host === user?.uid) {
+            if (isHost) {
               await set(ref(db, `sessions/${sessionId}/meta/status`), 'closed');
             }
             navigate('/home');
