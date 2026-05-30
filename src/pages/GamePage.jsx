@@ -185,14 +185,23 @@ function GameContent() {
   const outOfZoneHiders = zone
     ? hiders.filter((p) => !p.caught && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, zone))
     : [];
-  const outOfZoneUids = outOfZoneHiders.map((p) => p.uid);
+  const outOfZoneSeekers = zone
+    ? players.filter((p) => p.role === 'seeker' && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, zone))
+    : [];
+  const outOfZoneUids = [
+    ...outOfZoneHiders.map((p) => p.uid),
+    ...outOfZoneSeekers.map((p) => p.uid),
+  ];
 
   const mapPlayers = isSeeker
     ? [
         ...players.filter((p) => p.role === 'seeker'),
         ...players.filter((p) => p.role === 'hider' && (p.caught || outOfZoneUids.includes(p.uid))),
       ]
-    : players.filter((p) => p.uid === user.uid);
+    : [
+        ...players.filter((p) => p.uid === user.uid),
+        ...outOfZoneSeekers,
+      ];
 
   const zoneCenter = zone && zone.length > 0
     ? [zone.reduce((s, p) => s + p.lat, 0) / zone.length, zone.reduce((s, p) => s + p.lng, 0) / zone.length]
