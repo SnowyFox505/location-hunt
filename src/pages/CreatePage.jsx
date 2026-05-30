@@ -5,11 +5,33 @@ import { useSession } from '../hooks/useSession';
 import { useZones } from '../hooks/useZones';
 import ZoneDrawer from '../components/Map/ZoneDrawer';
 import Button from '../components/UI/Button';
-import Card from '../components/UI/Card';
 import Input from '../components/UI/Input';
 
 const GAME_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
 const HIDING_DURATION_OPTIONS = [1, 2, 3, 5, 10];
+
+const GLASS_CARD = {
+  background: 'rgba(22,27,34,0.72)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  border: '1px solid rgba(48,54,61,0.8)',
+  borderRadius: 16,
+  padding: '20px',
+};
+
+function optionBtn(active) {
+  return {
+    padding: '8px 16px',
+    borderRadius: 12,
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    border: active ? '1px solid #3B82F6' : '1px solid rgba(48,54,61,0.8)',
+    background: active ? '#3B82F6' : 'rgba(13,17,23,0.45)',
+    color: active ? 'white' : 'rgba(255,255,255,0.5)',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  };
+}
 
 function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
   const { zones, loading, saveZone, deleteZone, generateShareCode, importByCode } = useZones(uid);
@@ -60,29 +82,23 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
 
   return (
     <>
-      {/* Overlay */}
       <div
         style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000 }}
         onClick={onClose}
       />
-      {/* Sheet */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 2001,
         backgroundColor: '#161B22', borderTop: '1px solid #30363D',
         borderRadius: '20px 20px 0 0', maxHeight: '75vh',
         display: 'flex', flexDirection: 'column',
       }}>
-        {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#30363D' }} />
         </div>
-
         <div className="flex items-center justify-between px-4 pb-3">
           <h2 className="text-game-text font-bold text-lg">Zonen-Bibliothek</h2>
           <button onClick={onClose} className="text-game-muted hover:text-game-text cursor-pointer text-xl">✕</button>
         </div>
-
-        {/* Tabs */}
         <div className="flex mx-4 mb-3 bg-game-bg rounded-xl p-1">
           {[['my', 'Meine Zonen'], ['import', 'Importieren']].map(([key, label]) => (
             <button
@@ -96,11 +112,9 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
             </button>
           ))}
         </div>
-
         <div className="overflow-y-auto flex-1 px-4 pb-6">
           {tab === 'my' && (
             <div className="flex flex-col gap-3">
-              {/* Save current zone */}
               {currentPolygon && currentPolygon.length >= 3 && (
                 <div className="bg-game-bg rounded-xl p-3 border border-game-border">
                   <p className="text-game-muted text-xs mb-2">Aktuelle Zone speichern</p>
@@ -122,12 +136,10 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
                   </div>
                 </div>
               )}
-
               {loading && <p className="text-game-muted text-sm text-center py-4">Laden...</p>}
               {!loading && zones.length === 0 && (
                 <p className="text-game-muted text-sm text-center py-6">Noch keine gespeicherten Zonen.</p>
               )}
-
               {zones.map((zone) => (
                 <div key={zone.id} className="bg-game-bg rounded-xl p-3 border border-game-border">
                   <div className="flex items-center justify-between mb-2">
@@ -150,13 +162,7 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
                           : 'border-game-border text-game-muted hover:border-game-blue'
                       }`}
                     >
-                      {copiedCode === zone.id
-                        ? `Code: ${zone.shareCode}`
-                        : generatingCode === zone.id
-                          ? '...'
-                          : zone.shareCode
-                            ? 'Code kopieren'
-                            : 'Teilen'}
+                      {copiedCode === zone.id ? `Code: ${zone.shareCode}` : generatingCode === zone.id ? '...' : zone.shareCode ? 'Code kopieren' : 'Teilen'}
                     </button>
                     <button
                       onClick={() => deleteZone(zone.id)}
@@ -172,21 +178,16 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
               ))}
             </div>
           )}
-
           {tab === 'import' && (
             <div className="flex flex-col gap-3">
-              <p className="text-game-muted text-sm">
-                Gib den 6-stelligen Code ein, den dir jemand geteilt hat.
-              </p>
+              <p className="text-game-muted text-sm">Gib den 6-stelligen Code ein, den dir jemand geteilt hat.</p>
               <input
                 value={importCode}
                 onChange={(e) => setImportCode(e.target.value.toUpperCase().slice(0, 6))}
                 placeholder="z.B. XK92PL"
                 className="bg-game-card border border-game-border rounded-lg px-4 py-3 text-game-text text-center font-bold tracking-[0.3em] text-xl placeholder-game-muted focus:outline-none focus:border-game-blue"
               />
-              {importError && (
-                <p className="text-game-red text-sm">{importError}</p>
-              )}
+              {importError && <p className="text-game-red text-sm">{importError}</p>}
               <Button onClick={handleImport} disabled={importCode.length < 6 || importing}>
                 {importing ? 'Wird geladen...' : 'Zone importieren'}
               </Button>
@@ -238,65 +239,112 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-game-bg max-w-sm mx-auto w-full">
-      <div className="pt-safe px-4 py-6 flex items-center gap-3 border-b border-game-border shrink-0">
-        <button onClick={() => step === 2 ? setStep(1) : navigate('/home')} className="text-game-muted hover:text-game-text cursor-pointer">
-          ←
-        </button>
-        <h1 className="text-game-text font-bold text-lg">
-          {step === 1 ? 'Einstellungen' : 'Zone zeichnen'}
-        </h1>
-        <div className="ml-auto flex gap-1">
-          {[1, 2].map((s) => (
-            <div key={s} className={`w-2 h-2 rounded-full ${step >= s ? 'bg-game-blue' : 'bg-game-border'}`} />
-          ))}
-        </div>
-      </div>
-
+    <>
+      {/* ── Step 1: Settings ── */}
       {step === 1 && (
-        <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-6">
-          <Card>
-            <h2 className="text-game-text font-bold mb-4">Spielzeit</h2>
-            <div className="flex flex-wrap gap-2">
-              {GAME_DURATION_OPTIONS.map((v) => (
-                <button key={v} onClick={() => setSettings((s) => ({ ...s, gameDuration: v }))}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors cursor-pointer ${settings.gameDuration === v ? 'bg-game-blue border-game-blue text-white' : 'bg-game-bg border-game-border text-game-muted hover:border-game-blue'}`}>
-                  {v} Min
-                </button>
-              ))}
-            </div>
-          </Card>
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundImage: 'url(/bg-home.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(160deg, rgba(13,17,23,0.45) 0%, rgba(13,17,23,0.72) 50%, rgba(13,17,23,0.92) 100%)',
+            pointerEvents: 'none',
+          }} />
 
-          <Card>
-            <h2 className="text-game-text font-bold mb-4">Versteckzeit</h2>
-            <div className="flex flex-wrap gap-2">
-              {HIDING_DURATION_OPTIONS.map((v) => (
-                <button key={v} onClick={() => setSettings((s) => ({ ...s, hidingDuration: v }))}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors cursor-pointer ${settings.hidingDuration === v ? 'bg-game-blue border-game-blue text-white' : 'bg-game-bg border-game-border text-game-muted hover:border-game-blue'}`}>
-                  {v} Min
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-game-text font-bold mb-4">Ping-Intervall</h2>
-            <select
-              value={settings.pingInterval}
-              onChange={(e) => setSettings((s) => ({ ...s, pingInterval: Number(e.target.value) }))}
-              className="w-full bg-game-bg border border-game-border rounded-lg px-4 py-3 text-game-text focus:outline-none focus:border-game-blue min-h-[48px]"
+          <div className="relative flex flex-col h-full max-w-sm mx-auto w-full" style={{ zIndex: 1 }}>
+            {/* Header */}
+            <div
+              className="pt-safe px-4 py-6 flex items-center gap-3 shrink-0"
+              style={{ borderBottom: '1px solid rgba(48,54,61,0.5)' }}
             >
-              {[1, 2, 3, 4, 5].map((v) => (
-                <option key={v} value={v}>{v} Minute{v > 1 ? 'n' : ''}</option>
-              ))}
-            </select>
-            <p className="text-game-muted text-xs mt-2">Alle X Minuten erhalten Seeker einen Ping mit Hider-Positionen.</p>
-          </Card>
+              <button
+                onClick={() => navigate('/home')}
+                style={{ color: 'rgba(255,255,255,0.7)', fontSize: 20 }}
+                className="cursor-pointer"
+              >
+                ←
+              </button>
+              <h1 className="text-white font-bold text-lg" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+                Einstellungen
+              </h1>
+              <div className="ml-auto flex gap-1">
+                {[1, 2].map((s) => (
+                  <div key={s} style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: step >= s ? '#3B82F6' : 'rgba(48,54,61,0.8)',
+                  }} />
+                ))}
+              </div>
+            </div>
 
-          <Button onClick={() => setStep(2)}>Weiter: Zone zeichnen →</Button>
+            {/* Settings cards */}
+            <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-5">
+              {/* Spielzeit */}
+              <div style={GLASS_CARD}>
+                <h2 className="text-white font-bold mb-4">Spielzeit</h2>
+                <div className="flex flex-wrap gap-2">
+                  {GAME_DURATION_OPTIONS.map((v) => (
+                    <button key={v} onClick={() => setSettings((s) => ({ ...s, gameDuration: v }))}
+                      style={optionBtn(settings.gameDuration === v)}>
+                      {v} Min
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Versteckzeit */}
+              <div style={GLASS_CARD}>
+                <h2 className="text-white font-bold mb-4">Versteckzeit</h2>
+                <div className="flex flex-wrap gap-2">
+                  {HIDING_DURATION_OPTIONS.map((v) => (
+                    <button key={v} onClick={() => setSettings((s) => ({ ...s, hidingDuration: v }))}
+                      style={optionBtn(settings.hidingDuration === v)}>
+                      {v} Min
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ping-Intervall */}
+              <div style={GLASS_CARD}>
+                <h2 className="text-white font-bold mb-4">Ping-Intervall</h2>
+                <select
+                  value={settings.pingInterval}
+                  onChange={(e) => setSettings((s) => ({ ...s, pingInterval: Number(e.target.value) }))}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(13,17,23,0.6)',
+                    border: '1px solid rgba(48,54,61,0.8)',
+                    borderRadius: 10,
+                    padding: '12px 16px',
+                    color: 'white',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    minHeight: 48,
+                  }}
+                >
+                  {[1, 2, 3, 4, 5].map((v) => (
+                    <option key={v} value={v} style={{ background: '#161B22' }}>
+                      {v} Minute{v > 1 ? 'n' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', marginTop: 8 }}>
+                  Alle X Minuten erhalten Seeker einen Ping mit Hider-Positionen.
+                </p>
+              </div>
+
+              <Button onClick={() => setStep(2)}>Weiter: Zone zeichnen →</Button>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ── Step 2: Zone drawing (full-screen map, unchanged) ── */}
       {step === 2 && (
         <div className="fixed inset-0 flex flex-col bg-game-bg z-50">
           <div className="pt-safe px-4 py-3 flex items-center gap-3 border-b border-game-border shrink-0 bg-game-bg">
@@ -352,6 +400,6 @@ export default function CreatePage() {
           onClose={() => setShowLibrary(false)}
         />
       )}
-    </div>
+    </>
   );
 }
