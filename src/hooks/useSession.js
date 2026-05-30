@@ -111,8 +111,16 @@ export function useSession() {
   }
 
   async function resetSession(sessionId) {
-    await update(ref(db, `sessions/${sessionId}/meta`), { status: 'waiting' });
+    await update(ref(db, `sessions/${sessionId}/meta`), { status: 'waiting', hostEnded: null });
   }
 
-  return { createSession, joinSession, startGame, setPlayerRole, endGame, resetSession };
+  async function updateSettings(sessionId, settings) {
+    await update(ref(db, `sessions/${sessionId}/meta`), { settings });
+  }
+
+  async function transferHost(sessionId, newHostUid) {
+    await update(ref(db, `sessions/${sessionId}/meta`), { host: newHostUid });
+  }
+
+  return { createSession, joinSession, startGame, setPlayerRole, endGame, resetSession, updateSettings, transferHost };
 }

@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ref, set } from 'firebase/database';
+import { ref, set, update } from 'firebase/database';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
@@ -24,12 +24,19 @@ function EndContent() {
   const seekersWon = stats?.winner === 'seeker';
   const winColor = seekersWon ? '#EF4444' : '#22C55E';
 
-  // When host closes the session, redirect everyone to home
+  // status watchers
   useEffect(() => {
-    if (!loading && meta?.status === 'closed') {
-      navigate('/home', { replace: true });
-    }
+    if (loading) return;
+    if (meta?.status === 'closed') navigate('/home', { replace: true });
+    if (meta?.status === 'waiting') navigate(`/lobby/${sessionId}`, { replace: true });
   }, [meta?.status, loading]);
+
+  // When host signals ending, disable Neue Runde and redirect after 2.5s
+  useEffect(() => {
+    if (!meta?.hostEnded) return;
+    const t = setTimeout(() => navigate('/home', { replace: true }), 2500);
+    return () => clearTimeout(t);
+  }, [meta?.hostEnded]);
 
   // Pre-generate particles once per render
   const particles = useMemo(() => {
@@ -68,8 +75,18 @@ function EndContent() {
     .sort((a, b) => (a.caughtAt || 0) - (b.caughtAt || 0));
 
   async function handleNewRound() {
-    await resetSession(sessionId);
+    await resetSession(sessionId); // also clears hostEnded
     navigate(`/lobby/${sessionId}`);
+  }
+
+  async function handleEnd() {
+    if (isHost) {
+      // Flag it so everyone's Neue Runde grays out immediately
+      await update(ref(db, `sessions/${sessionId}/meta`), { hostEnded: true });
+      // Kick everyone to home after a short moment
+      setTimeout(() => set(ref(db, `sessions/${sessionId}/meta/status`), 'closed'), 1500);
+    }
+    navigate('/home');
   }
 
   return (
@@ -271,13 +288,13 @@ function EndContent() {
           className="flex flex-col gap-3 mt-2"
           style={{ animation: 'fadeInUp 0.4s 1.8s ease both', opacity: 0 }}
         >
-          {isHost && <Button onClick={handleNewRound}>Neue Runde</Button>}
-          <Button variant="ghost" onClick={async () => {
-            if (isHost) {
-              await set(ref(db, `sessions/${sessionId}/meta/status`), 'closed');
-            }
-            navigate('/home');
-          }}>
+          <Button
+            onClick={handleNewRound}
+            disabled={!!meta?.hostEnded}
+          >
+            {meta?.hostEnded ? 'Host hat beendet…' : 'Neue Runde'}
+          </Button>
+          <Button variant="ghost" onClick={handleEnd}>
             Beenden
           </Button>
         </div>

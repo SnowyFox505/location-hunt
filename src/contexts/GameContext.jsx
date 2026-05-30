@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, runTransaction } from 'firebase/database';
 import { db } from '../firebase';
 
 const GameContext = createContext(null);
@@ -25,6 +25,26 @@ export function GameProvider({ sessionId, children }) {
     });
     return unsub;
   }, [sessionId]);
+
+  // Auto-elect a new host if the current host goes offline during an active game phase
+  const hostOnline = session?.players?.[session?.meta?.host]?.online;
+  useEffect(() => {
+    if (!sessionId || !session?.meta?.host) return;
+    if (!['hiding', 'playing'].includes(session?.meta?.status)) return;
+    if (hostOnline !== false) return;
+
+    const candidates = Object.entries(session.players || {})
+      .filter(([uid, p]) => uid !== session.meta.host && p.online !== false)
+      .map(([uid]) => uid)
+      .sort();
+    if (candidates.length === 0) return;
+
+    const newHost = candidates[0];
+    runTransaction(ref(db, `sessions/${sessionId}/meta/host`), (current) => {
+      if (current !== session.meta.host) return; // already reassigned — abort
+      return newHost;
+    });
+  }, [hostOnline, session?.meta?.host, session?.meta?.status, sessionId]);
 
   const playerUidsKey = session?.players ? Object.keys(session.players).sort().join(',') : '';
 
