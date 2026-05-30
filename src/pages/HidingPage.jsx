@@ -43,8 +43,8 @@ function HidingContent() {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-      {/* Map fills entire screen */}
-      <GameMap center={zoneCenter} zone={zone} players={[]} myUid={user.uid} showPlayers={false} />
+      {/* Map fills entire screen — show own position only */}
+      <GameMap center={zoneCenter} zone={zone} players={myPlayer ? [myPlayer] : []} myUid={user.uid} showPlayers={true} />
 
       {/* UI overlaid at top */}
       <div

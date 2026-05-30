@@ -11,6 +11,9 @@ function RecenterMap({ center }) {
   return null;
 }
 
+// Large outer ring used to create the inverted zone mask
+const WORLD_RING = [[-85, -180], [-85, 180], [85, 180], [85, -180]];
+
 export default function GameMap({ center, zoom = 17, zone, players = [], outOfZonePlayers = [], pings = null, myUid, showPlayers = true, showPings = false }) {
   // Keep only the latest ping per hider (replaces old one when new ping arrives)
   const pingEntries = pings
@@ -27,6 +30,9 @@ export default function GameMap({ center, zoom = 17, zone, players = [], outOfZo
       ).map(([uid, { data, timestamp }]) => ({ uid, data, timestamp }))
     : [];
 
+  const hasZone = zone && zone.length >= 3;
+  const zoneCoords = hasZone ? zone.map((p) => [p.lat, p.lng]) : null;
+
   return (
     <MapContainer
       center={center || [51.505, -0.09]}
@@ -35,18 +41,30 @@ export default function GameMap({ center, zoom = 17, zone, players = [], outOfZo
       zoomControl
       attributionControl={false}
     >
+      {/* Light map tiles — zone interior is clearly readable */}
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='© OpenStreetMap contributors © CARTO'
         subdomains="abcd"
         maxZoom={19}
       />
-      {zone && zone.length >= 3 && (
+
+      {/* Dark mask covering everything outside the zone */}
+      {hasZone && (
         <Polygon
-          positions={zone.map((p) => [p.lat, p.lng])}
-          pathOptions={{ color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 0.08, weight: 2 }}
+          positions={[WORLD_RING, zoneCoords]}
+          pathOptions={{ fillColor: '#0D1117', fillOpacity: 0.82, stroke: false, weight: 0 }}
         />
       )}
+
+      {/* Zone border */}
+      {hasZone && (
+        <Polygon
+          positions={zoneCoords}
+          pathOptions={{ color: '#3B82F6', weight: 2.5, fill: false }}
+        />
+      )}
+
       {showPlayers && players.map((p) => (
         <PlayerMarker key={p.uid} player={p} isMe={p.uid === myUid} outOfZone={outOfZonePlayers.includes(p.uid)} />
       ))}
