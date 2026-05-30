@@ -131,9 +131,21 @@ function LobbyContent() {
       </div>
 
       <div className="flex flex-col gap-4 flex-1">
-        <Card className="text-center">
+        <Card className="text-center" style={{ animation: 'fadeInUp 0.4s ease both', opacity: 0 }}>
           <p className="text-game-muted text-sm mb-1">Session-Code</p>
-          <p className="text-game-text text-4xl font-black tracking-widest">{meta.code}</p>
+          <p
+            className="text-4xl font-black tracking-widest"
+            style={{
+              background: 'linear-gradient(90deg, #E6EDF3 0%, #93c5fd 45%, #E6EDF3 100%)',
+              backgroundSize: '300% auto',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              animation: 'shimmer 3.5s ease-in-out infinite',
+            }}
+          >
+            {meta.code}
+          </p>
         </Card>
 
         <Card>
@@ -183,8 +195,12 @@ function LobbyContent() {
         <Card>
           <h2 className="text-game-text font-bold mb-3">Spieler ({players.length})</h2>
           <div className="flex flex-col gap-2">
-            {players.map((p) => (
-              <div key={p.uid} className="flex items-center justify-between py-2 border-b border-game-border last:border-0">
+            {players.map((p, i) => (
+              <div
+                key={p.uid}
+                className="flex items-center justify-between py-2 border-b border-game-border last:border-0"
+                style={{ animation: `slideInRight 0.3s ${i * 0.07}s ease both`, opacity: 0 }}
+              >
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-game-blue flex items-center justify-center text-white text-xs font-bold">
                     {(p.name || '?').slice(0, 2).toUpperCase()}
@@ -230,9 +246,22 @@ function LobbyContent() {
                 {randomRoles ? 'Mind. 2 Spieler erforderlich' : 'Mind. 1 Hider und 1 Seeker erforderlich'}
               </p>
             )}
-            <Button onClick={handleStart} disabled={!canStart || starting}>
+            <Button
+              onClick={handleStart}
+              disabled={!canStart || starting}
+              style={canStart && !starting ? {
+                boxShadow: '0 0 0 0 rgba(59,130,246,0.5)',
+                animation: 'startGlow 1.8s ease-in-out infinite',
+              } : {}}
+            >
               {starting ? 'Spiel wird gestartet...' : 'Spiel starten'}
             </Button>
+            <style>{`
+              @keyframes startGlow {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.5); }
+                50%       { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
+              }
+            `}</style>
           </div>
         ) : (
           <div className="text-center py-4">

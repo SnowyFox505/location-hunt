@@ -17,9 +17,14 @@ export default function HomePage() {
 
   return (
     <div className="pt-safe flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8" style={{ animation: 'fadeIn 0.4s ease both' }}>
         <div className="flex items-center gap-3">
-          <img src="/logo.png" className="w-10 h-10 rounded-xl object-cover" alt="LocationHunt" />
+          <img
+            src="/logo.png"
+            className="w-10 h-10 rounded-xl object-cover"
+            alt="LocationHunt"
+            style={{ animation: 'float 4s ease-in-out infinite' }}
+          />
           <span className="text-game-text font-bold text-lg">LocationHunt</span>
         </div>
         <div className="flex items-center gap-3">
@@ -57,7 +62,7 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 flex flex-col justify-center gap-6">
-        <div>
+        <div style={{ animation: 'fadeInUp 0.5s 0.05s ease both', opacity: 0 }}>
           <h1 className="text-game-text text-3xl font-black">
             Hallo, <span style={{ color }}>{name}</span>!
           </h1>
@@ -68,6 +73,7 @@ export default function HomePage() {
           <button
             onClick={() => navigate('/create')}
             className="bg-game-card border border-game-border rounded-2xl p-6 text-left hover:border-game-blue transition-colors cursor-pointer active:scale-95"
+            style={{ animation: 'fadeInUp 0.5s 0.15s ease both', opacity: 0 }}
           >
             <div className="w-12 h-12 bg-game-blue/20 rounded-xl flex items-center justify-center mb-3">
               <span className="text-game-blue text-2xl">＋</span>
@@ -79,6 +85,7 @@ export default function HomePage() {
           <button
             onClick={() => navigate('/join')}
             className="bg-game-card border border-game-border rounded-2xl p-6 text-left hover:border-game-blue transition-colors cursor-pointer active:scale-95"
+            style={{ animation: 'fadeInUp 0.5s 0.28s ease both', opacity: 0 }}
           >
             <div className="w-12 h-12 bg-game-green/20 rounded-xl flex items-center justify-center mb-3">
               <span className="text-game-green text-2xl">→</span>

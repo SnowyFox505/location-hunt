@@ -41,26 +41,46 @@ export default function AuthPage() {
     }
   }
 
+  function switchTab(t) {
+    setTab(t);
+    setError('');
+  }
+
   return (
     <div className="pt-safe flex items-center justify-center min-h-full bg-game-bg px-4 py-8">
-      <div className="w-full max-w-sm">
+      <div
+        className="w-full max-w-sm"
+        style={{ animation: 'slideInUp 0.5s 0.05s ease both', opacity: 0 }}
+      >
+        {/* Logo + title */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-game-blue rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-3xl font-black">L</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="LocationHunt"
+            style={{
+              width: 72, height: 72,
+              borderRadius: 18,
+              objectFit: 'cover',
+              margin: '0 auto 1rem',
+              animation: 'float 3.5s ease-in-out infinite',
+              boxShadow: '0 8px 32px rgba(59,130,246,0.3)',
+            }}
+          />
           <h1 className="text-game-text text-3xl font-black">LocationHunt</h1>
-          <p className="text-game-muted text-sm mt-1">GPS Hide & Seek</p>
+          <p className="text-game-muted text-sm mt-1">GPS Hide &amp; Seek</p>
         </div>
 
         <Card>
+          {/* Tab switcher */}
           <div className="flex mb-6 bg-game-bg rounded-xl p-1">
             {['login', 'register'].map((t) => (
               <button
                 key={t}
-                onClick={() => { setTab(t); setError(''); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
+                onClick={() => switchTab(t)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                   tab === t ? 'bg-game-blue text-white' : 'text-game-muted hover:text-game-text'
                 }`}
+                style={tab === t ? { boxShadow: '0 2px 12px rgba(59,130,246,0.4)' } : {}}
               >
                 {t === 'login' ? 'Anmelden' : 'Registrieren'}
               </button>
@@ -69,13 +89,15 @@ export default function AuthPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {tab === 'register' && (
-              <Input
-                label="Anzeigename"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Max"
-                autoComplete="nickname"
-              />
+              <div style={{ animation: 'fadeInUp 0.3s ease both' }}>
+                <Input
+                  label="Anzeigename"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Max"
+                  autoComplete="nickname"
+                />
+              </div>
             )}
             <Input
               label="E-Mail"
@@ -94,18 +116,24 @@ export default function AuthPage() {
               autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
             />
             {tab === 'register' && (
-              <Input
-                label="Passwort wiederholen"
-                type="password"
-                value={password2}
-                onChange={(e) => setPassword2(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
+              <div style={{ animation: 'fadeInUp 0.3s ease both' }}>
+                <Input
+                  label="Passwort wiederholen"
+                  type="password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+              </div>
             )}
 
             {error && (
-              <div className="bg-red-900/30 border border-game-red rounded-lg px-4 py-3 text-game-red text-sm">
+              <div
+                key={error}
+                style={{ animation: 'shake 0.42s ease both' }}
+                className="bg-red-900/30 border border-game-red rounded-lg px-4 py-3 text-game-red text-sm"
+              >
                 {error}
               </div>
             )}
