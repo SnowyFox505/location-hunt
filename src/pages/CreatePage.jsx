@@ -202,6 +202,7 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
 export default function CreatePage() {
   const [step, setStep] = useState(1);
   const [gameMode, setGameMode] = useState('classic');
+  const [openInfo, setOpenInfo] = useState(null);
   const [settings, setSettings] = useState({
     gameDuration: 20,
     hidingDuration: 3,
@@ -286,56 +287,107 @@ export default function CreatePage() {
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-5">
 
               {/* Game mode selector */}
-              <div style={GLASS_CARD}>
-                <h2 className="text-white font-bold mb-3">Spielmodus</h2>
-                <div className="flex flex-col gap-3">
-                  {/* Classic — selectable, full width */}
+              {(() => {
+                const modes = [
+                  { key: 'classic', icon: '🎮', label: 'Klassisch', desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.', available: true },
+                  { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Wenn ein Hider gefangen wird, wechselt er sofort die Seite und wird selbst zum Seeker. Das Spiel endet wenn der letzte Hider gefangen ist oder die Zeit abläuft. Spiele können sehr schnell kippen, sobald das Gleichgewicht bricht.', available: false },
+                  { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Spielzone zieht sich alle 2 Minuten zusammen — wie in Battle Royale. Wer außerhalb der Zone ist, wird für alle sichtbar. Sehr dramatisch.', available: false },
+                  { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Seeker bekommen keine Pings und keine Positionshinweise. Stattdessen haben sie ein Näherungs-Radar: ein pulsierendes Signal, das schneller wird je näher der nächste Hider ist — aber ohne Richtung. Hider gewinnen automatisch wenn die Zeit abläuft. Reines Katz-und-Maus ohne Tech-Hilfe.', available: false },
+                ];
+                const infoBtn = (key) => (
                   <button
-                    onClick={() => setGameMode('classic')}
+                    onClick={(e) => { e.stopPropagation(); setOpenInfo(openInfo === key ? null : key); }}
                     style={{
-                      width: '100%', padding: '14px 12px', borderRadius: 12,
-                      border: `2px solid ${gameMode === 'classic' ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
-                      background: gameMode === 'classic' ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
-                      cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                      position: 'absolute', top: 8, right: 8, zIndex: 10,
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: openInfo === key ? '#3B82F6' : 'rgba(59,130,246,0.25)',
+                      border: '1.5px solid #3B82F6',
+                      color: 'white',
+                      fontSize: 12, fontStyle: 'italic', fontWeight: 700,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
                     }}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>🎮</span>
-                    <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>Klassisch</span>
+                    i
                   </button>
-
-                  {/* Coming-soon row */}
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    {[
-                      { icon: '🧟', label: 'Zombie Modus' },
-                      { icon: '🌀', label: 'Schrumpfzone' },
-                      { icon: '👻', label: 'Unsichtbar' },
-                    ].map(({ icon, label }) => (
-                      <div key={label} style={{ flex: 1, position: 'relative' }}>
-                        <div style={{
-                          padding: '12px 6px', borderRadius: 12,
-                          border: '2px solid rgba(48,54,61,0.5)',
-                          background: 'rgba(13,17,23,0.25)',
-                          textAlign: 'center', opacity: 0.5,
-                        }}>
-                          <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
-                          <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.75rem' }}>{label}</div>
-                        </div>
-                        <div style={{
-                          position: 'absolute', top: -7, right: -4,
-                          background: '#F97316',
-                          color: 'white', fontSize: '0.55rem', fontWeight: 800,
-                          padding: '2px 6px', borderRadius: 20,
-                          textTransform: 'uppercase', letterSpacing: '0.06em',
-                          boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
-                        }}>
-                          Demnächst
-                        </div>
-                      </div>
-                    ))}
+                );
+                const descBox = (key) => openInfo === key && (
+                  <div style={{
+                    marginTop: 6, padding: '8px 10px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8,
+                    color: 'rgba(255,255,255,0.65)',
+                    fontSize: '0.72rem', lineHeight: 1.5,
+                    animation: 'fadeIn 0.2s ease both',
+                  }}>
+                    {modes.find(m => m.key === key)?.desc}
                   </div>
-                </div>
-              </div>
+                );
+                const classic = modes[0];
+                const comingSoon = modes.slice(1);
+                return (
+                  <div style={GLASS_CARD}>
+                    <h2 className="text-white font-bold mb-3">Spielmodus</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                      {/* Klassisch — full-width selectable */}
+                      <div>
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            onClick={() => setGameMode('classic')}
+                            style={{
+                              width: '100%', padding: '14px 12px', borderRadius: 12,
+                              border: `2px solid ${gameMode === 'classic' ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
+                              background: gameMode === 'classic' ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
+                              cursor: 'pointer', transition: 'all 0.15s',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                            }}
+                          >
+                            <span style={{ fontSize: '1.5rem' }}>{classic.icon}</span>
+                            <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>{classic.label}</span>
+                          </button>
+                          {infoBtn('classic')}
+                        </div>
+                        {descBox('classic')}
+                      </div>
+
+                      {/* Coming-soon row */}
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        {comingSoon.map(({ key, icon, label }) => (
+                          <div key={key} style={{ flex: 1 }}>
+                            <div style={{ position: 'relative' }}>
+                              <div style={{
+                                padding: '12px 6px', borderRadius: 12,
+                                border: '2px solid rgba(48,54,61,0.5)',
+                                background: 'rgba(13,17,23,0.25)',
+                                textAlign: 'center', opacity: 0.55,
+                              }}>
+                                <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
+                                <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
+                              </div>
+                              {/* Demnächst badge */}
+                              <div style={{
+                                position: 'absolute', top: -7, right: -4,
+                                background: '#F97316', color: 'white',
+                                fontSize: '0.52rem', fontWeight: 800,
+                                padding: '2px 6px', borderRadius: 20,
+                                textTransform: 'uppercase', letterSpacing: '0.06em',
+                                boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
+                              }}>
+                                Demnächst
+                              </div>
+                              {infoBtn(key)}
+                            </div>
+                            {descBox(key)}
+                          </div>
+                        ))}
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Spielzeit */}
               <div style={GLASS_CARD}>
