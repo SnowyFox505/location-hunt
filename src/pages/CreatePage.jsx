@@ -201,6 +201,7 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
 
 export default function CreatePage() {
   const [step, setStep] = useState(1);
+  const [gameMode, setGameMode] = useState('classic');
   const [settings, setSettings] = useState({
     gameDuration: 20,
     hidingDuration: 3,
@@ -283,6 +284,51 @@ export default function CreatePage() {
 
             {/* Settings cards */}
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-5">
+
+              {/* Game mode selector */}
+              <div style={GLASS_CARD}>
+                <h2 className="text-white font-bold mb-3">Spielmodus</h2>
+                <div className="flex gap-3">
+                  {/* Classic — selectable */}
+                  <button
+                    onClick={() => setGameMode('classic')}
+                    style={{
+                      flex: 1, padding: '12px 8px', borderRadius: 12,
+                      border: `2px solid ${gameMode === 'classic' ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
+                      background: gameMode === 'classic' ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
+                      cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
+                    }}
+                  >
+                    <div style={{ fontSize: '1.6rem', marginBottom: 4 }}>🎮</div>
+                    <div style={{ color: 'white', fontWeight: 700, fontSize: '0.85rem' }}>Klassisch</div>
+                  </button>
+
+                  {/* Zombie Mode — coming soon */}
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <div style={{
+                      padding: '12px 8px', borderRadius: 12,
+                      border: '2px solid rgba(48,54,61,0.5)',
+                      background: 'rgba(13,17,23,0.25)',
+                      textAlign: 'center', opacity: 0.5,
+                    }}>
+                      <div style={{ fontSize: '1.6rem', marginBottom: 4 }}>🧟</div>
+                      <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.85rem' }}>Zombie Modus</div>
+                    </div>
+                    {/* "Demnächst" badge */}
+                    <div style={{
+                      position: 'absolute', top: -8, right: -4,
+                      background: '#F97316',
+                      color: 'white', fontSize: '0.6rem', fontWeight: 800,
+                      padding: '2px 7px', borderRadius: 20,
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
+                    }}>
+                      Demnächst
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Spielzeit */}
               <div style={GLASS_CARD}>
                 <h2 className="text-white font-bold mb-4">Spielzeit</h2>
