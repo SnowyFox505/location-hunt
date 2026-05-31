@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ref, set } from 'firebase/database';
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile, DEFAULT_COLOR } from '../hooks/useUserProfile';
 
@@ -36,6 +38,14 @@ export default function SettingsPage() {
   const [photoFile, setPhotoFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  async function handleResetStats() {
+    await set(ref(db, `users/${user.uid}/stats`), {
+      gamesPlayed: 0, gamesWon: 0, totalDistance: 0, currentStreak: 0, bestStreak: 0,
+    });
+    setConfirmReset(false);
+  }
 
   useEffect(() => {
     if (!profile) return;
@@ -194,25 +204,70 @@ export default function SettingsPage() {
         {/* Stats */}
         {profile?.stats && (
           <div className="mb-6">
-            <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', fontWeight: 500, display: 'block', marginBottom: 12 }}>
-              Statistiken
-            </label>
-            <div style={{
-              ...GLASS,
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '16px',
-            }}>
+            {/* Header row with reset button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', fontWeight: 500 }}>
+                Statistiken
+              </label>
+              {!confirmReset ? (
+                <button
+                  onClick={() => setConfirmReset(true)}
+                  style={{ color: 'rgba(239,68,68,0.7)', fontSize: '0.72rem', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                >
+                  Zurücksetzen
+                </button>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem' }}>Wirklich?</span>
+                  <button
+                    onClick={handleResetStats}
+                    style={{ color: '#EF4444', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                  >
+                    Ja
+                  </button>
+                  <button
+                    onClick={() => setConfirmReset(false)}
+                    style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                  >
+                    Nein
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2×2 grid: Spiele, Siege, Strecke + placeholder */}
+            <div style={{ ...GLASS, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '14px', marginBottom: 8 }}>
               {[
-                { icon: '🎮', value: profile.stats.gamesPlayed ?? 0,  label: 'Spiele' },
-                { icon: '🏆', value: profile.stats.gamesWon      ?? 0,  label: 'Siege' },
+                { icon: '🎮', value: profile.stats.gamesPlayed ?? 0, label: 'Spiele' },
+                { icon: '🏆', value: profile.stats.gamesWon ?? 0, label: 'Siege' },
                 { icon: '🏃', value: `${((profile.stats.totalDistance ?? 0) / 1000).toFixed(1)} km`, label: 'Strecke' },
-                { icon: '🔥', value: `${profile.stats.currentStreak ?? 0} · ${profile.stats.bestStreak ?? 0}`, label: 'Serie' },
               ].map(({ icon, value, label }) => (
-                <div key={label} style={{ textAlign: 'center', padding: '8px 4px' }}>
-                  <div style={{ fontSize: '1.4rem', marginBottom: 4 }}>{icon}</div>
-                  <div style={{ color: 'white', fontWeight: 700, fontSize: '1.2rem', lineHeight: 1.2 }}>{value}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
+                <div key={label} style={{ textAlign: 'center', padding: '6px 2px' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: 3 }}>{icon}</div>
+                  <div style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.2 }}>{value}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
                 </div>
               ))}
+            </div>
+
+            {/* Streak — full width with clear labels */}
+            <div style={{ ...GLASS, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: '1.1rem' }}>🔥</span>
+                <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Hider-Serie (nicht gefangen)
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 0 }}>
+                <div style={{ flex: 1, textAlign: 'center', borderRight: '1px solid rgba(48,54,61,0.8)', paddingRight: 8 }}>
+                  <div style={{ color: 'white', fontWeight: 700, fontSize: '1.6rem', lineHeight: 1 }}>{profile.stats.currentStreak ?? 0}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.62rem', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Aktuell</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'center', paddingLeft: 8 }}>
+                  <div style={{ color: '#EAB308', fontWeight: 700, fontSize: '1.6rem', lineHeight: 1 }}>{profile.stats.bestStreak ?? 0}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.62rem', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Rekord</div>
+                </div>
+              </div>
             </div>
           </div>
         )}
