@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ref, runTransaction, set, get } from 'firebase/database';
+import { ref, runTransaction, set, get, update } from 'firebase/database';
 import { db } from '../firebase';
 import { vibrate, VIBRATIONS } from '../utils/vibrate';
 
@@ -39,8 +39,15 @@ export function usePings(sessionId, players, myUid, myRole, active) {
 
         const playersData = playersSnap.val() || {};
         const pingData = {};
+        const clearPatch = {};
+
         Object.entries(playersData).forEach(([uid, p]) => {
-          if (p.role === 'hider' && !p.caught && p.lat != null && p.lng != null) {
+          if (p.role !== 'hider' || p.caught) return;
+          if (p.queuedDecoy) {
+            // Send the fake position instead of the real one
+            pingData[uid] = { lat: p.queuedDecoy.lat, lng: p.queuedDecoy.lng, name: p.name };
+            clearPatch[`players/${uid}/queuedDecoy`] = null;
+          } else if (p.lat != null && p.lng != null) {
             pingData[uid] = { lat: p.lat, lng: p.lng, name: p.name };
           }
         });
@@ -48,6 +55,11 @@ export function usePings(sessionId, players, myUid, myRole, active) {
         if (Object.keys(pingData).length > 0) {
           await set(ref(db, `sessions/${sessionId}/pings/${Date.now()}`), pingData);
           vibrate(VIBRATIONS.ping);
+        }
+
+        // Clear any queued decoys that were just fired
+        if (Object.keys(clearPatch).length > 0) {
+          await update(ref(db, `sessions/${sessionId}`), clearPatch);
         }
 
         await runTransaction(ref(db, `sessions/${sessionId}/game/pingCount`), (c) => (c || 0) + 1);

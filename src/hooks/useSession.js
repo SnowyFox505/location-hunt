@@ -111,7 +111,33 @@ export function useSession() {
   }
 
   async function resetSession(sessionId) {
-    await update(ref(db, `sessions/${sessionId}/meta`), { status: 'waiting', hostEnded: null });
+    const snap = await get(ref(db, `sessions/${sessionId}/players`));
+    const players = snap.val() || {};
+
+    const patch = {
+      'meta/status': 'waiting',
+      'meta/hostEnded': null,
+      'pings': null,
+      'game': null,
+      'stats': null,
+      'catchRequests': null,
+    };
+
+    Object.keys(players).forEach((uid) => {
+      patch[`players/${uid}/caught`]           = false;
+      patch[`players/${uid}/caughtAt`]          = null;
+      patch[`players/${uid}/caughtBy`]          = null;
+      patch[`players/${uid}/role`]              = 'hider';
+      patch[`players/${uid}/usedDecoy`]         = null;
+      patch[`players/${uid}/decoyPingTimestamp`] = null;
+      patch[`players/${uid}/queuedDecoy`]       = null;
+      patch[`players/${uid}/lastCampingPingAt`] = null;
+      patch[`players/${uid}/lastMovedAt`]       = null;
+      patch[`players/${uid}/lastLat`]           = null;
+      patch[`players/${uid}/lastLng`]           = null;
+    });
+
+    await update(ref(db, `sessions/${sessionId}`), patch);
   }
 
   async function updateSettings(sessionId, settings) {

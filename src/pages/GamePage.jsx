@@ -221,13 +221,11 @@ function GameContent() {
       setTimeout(() => setDecoyError(''), 3000);
       return;
     }
-    const ts = Date.now();
-    await set(ref(db, `sessions/${sessionId}/pings/${ts}`), {
-      [user.uid]: { lat, lng, name: myPlayer?.name || '?' },
-    });
+    // Queue the fake position — sent on the next regular ping instead of real position
     await update(ref(db, `sessions/${sessionId}/players/${user.uid}`), {
       usedDecoy: true,
-      decoyPingTimestamp: ts,
+      decoyPingTimestamp: Date.now(),
+      queuedDecoy: { lat, lng },
     });
     setPlacingDecoy(false);
   }
