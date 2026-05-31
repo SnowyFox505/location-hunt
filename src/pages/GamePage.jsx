@@ -97,6 +97,13 @@ function GameContent() {
   const [pendingRequest, setPendingRequest] = useState(null);
   const [placingDecoy, setPlacingDecoy] = useState(false);
   const [decoyError, setDecoyError] = useState('');
+  const [now, setNow] = useState(Date.now());
+
+  // Tick every 5s so camping warning recalculates
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(t);
+  }, []);
 
   // Refs for stats & distance tracking (avoid re-renders)
   const distTrackerRef = useRef(0);
@@ -233,6 +240,11 @@ function GameContent() {
     );
   }
 
+  // Camping warning: show after 2 min still (1 min before ping fires at 3 min)
+  const antiCampingEnabled = (meta?.settings?.pingInterval ?? 3) >= 3;
+  const campingWarning = !isSeeker && !isCaught && antiCampingEnabled &&
+    myPlayer?.lastMovedAt != null && (now - myPlayer.lastMovedAt) > 120_000;
+
   const hiders = players.filter((p) => p.role === 'hider');
   const caughtCount = hiders.filter((p) => p.caught).length;
   const uncaughtHiders = hiders.filter((p) => !p.caught);
@@ -285,6 +297,19 @@ function GameContent() {
         {outOfZone && !isCaught && (
           <div className="bg-game-red text-white text-center py-2 text-sm font-bold">
             Du verlässt die Spielzone! Kehre zurück.
+          </div>
+        )}
+        {campingWarning && (
+          <div style={{
+            backgroundColor: 'rgba(234,179,8,0.92)',
+            color: '#0D1117',
+            textAlign: 'center',
+            padding: '6px 12px',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            animation: 'countdownPulse 1.2s ease-in-out infinite',
+          }}>
+            ⚠️ Du campst zu lange — beweg dich, sonst wirst du geortet!
           </div>
         )}
         {isCaught && !isSeeker && (
