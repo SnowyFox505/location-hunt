@@ -309,6 +309,7 @@ export default function CreatePage() {
                     {[
                       { icon: '🧟', label: 'Zombie Modus' },
                       { icon: '🌀', label: 'Schrumpfzone' },
+                      { icon: '👻', label: 'Unsichtbar' },
                     ].map(({ icon, label }) => (
                       <div key={label} style={{ flex: 1, position: 'relative' }}>
                         <div style={{
