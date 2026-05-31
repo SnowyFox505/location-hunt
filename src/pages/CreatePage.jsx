@@ -240,8 +240,60 @@ export default function CreatePage() {
     }
   }
 
+  const modes = [
+    { key: 'classic', icon: '🎮', label: 'Klassisch', desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.', available: true },
+    { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Wenn ein Hider gefangen wird, wechselt er sofort die Seite und wird selbst zum Seeker. Das Spiel endet wenn der letzte Hider gefangen ist oder die Zeit abläuft. Spiele können sehr schnell kippen, sobald das Gleichgewicht bricht.', available: false },
+    { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Spielzone zieht sich alle 2 Minuten zusammen — wie in Battle Royale. Wer außerhalb der Zone ist, wird für alle sichtbar. Sehr dramatisch.', available: false },
+    { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Seeker bekommen keine Pings und keine Positionshinweise. Stattdessen haben sie ein Näherungs-Radar: ein pulsierendes Signal, das schneller wird je näher der nächste Hider ist — aber ohne Richtung. Hider gewinnen automatisch wenn die Zeit abläuft. Reines Katz-und-Maus ohne Tech-Hilfe.', available: false },
+  ];
+
+  const activeMode = openInfo ? modes.find(m => m.key === openInfo) : null;
+
   return (
     <>
+      {/* ── Mode info popup ── */}
+      {activeMode && (
+        <>
+          <div
+            onClick={() => setOpenInfo(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 3000 }}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            zIndex: 3001, width: 'min(320px, calc(100vw - 40px))',
+            background: '#161B22', border: '1px solid #30363D', borderRadius: 16,
+            padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          }}>
+            <button
+              onClick={() => setOpenInfo(null)}
+              style={{
+                position: 'absolute', top: 12, right: 12,
+                width: 28, height: 28, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                color: 'rgba(255,255,255,0.7)', fontSize: 14, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              ✕
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: '1.8rem' }}>{activeMode.icon}</span>
+              <div>
+                <div style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>{activeMode.label}</div>
+                {!activeMode.available && (
+                  <div style={{ color: '#F97316', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Demnächst
+                  </div>
+                )}
+              </div>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: 1.6, margin: 0 }}>
+              {activeMode.desc}
+            </p>
+          </div>
+        </>
+      )}
+
       {/* ── Step 1: Settings ── */}
       {step === 1 && (
         <div style={{
@@ -288,12 +340,6 @@ export default function CreatePage() {
 
               {/* Game mode selector */}
               {(() => {
-                const modes = [
-                  { key: 'classic', icon: '🎮', label: 'Klassisch', desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.', available: true },
-                  { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Wenn ein Hider gefangen wird, wechselt er sofort die Seite und wird selbst zum Seeker. Das Spiel endet wenn der letzte Hider gefangen ist oder die Zeit abläuft. Spiele können sehr schnell kippen, sobald das Gleichgewicht bricht.', available: false },
-                  { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Spielzone zieht sich alle 2 Minuten zusammen — wie in Battle Royale. Wer außerhalb der Zone ist, wird für alle sichtbar. Sehr dramatisch.', available: false },
-                  { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Seeker bekommen keine Pings und keine Positionshinweise. Stattdessen haben sie ein Näherungs-Radar: ein pulsierendes Signal, das schneller wird je näher der nächste Hider ist — aber ohne Richtung. Hider gewinnen automatisch wenn die Zeit abläuft. Reines Katz-und-Maus ohne Tech-Hilfe.', available: false },
-                ];
                 const infoBtn = (key) => (
                   <button
                     onClick={(e) => { e.stopPropagation(); setOpenInfo(openInfo === key ? null : key); }}
@@ -310,19 +356,6 @@ export default function CreatePage() {
                   >
                     i
                   </button>
-                );
-                const descBox = (key) => openInfo === key && (
-                  <div style={{
-                    marginTop: 6, padding: '8px 10px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 8,
-                    color: 'rgba(255,255,255,0.65)',
-                    fontSize: '0.72rem', lineHeight: 1.5,
-                    animation: 'fadeIn 0.2s ease both',
-                  }}>
-                    {modes.find(m => m.key === key)?.desc}
-                  </div>
                 );
                 const classic = modes[0];
                 const comingSoon = modes.slice(1);
@@ -349,7 +382,6 @@ export default function CreatePage() {
                           </button>
                           {infoBtn('classic')}
                         </div>
-                        {descBox('classic')}
                       </div>
 
                       {/* Coming-soon row */}
@@ -379,7 +411,6 @@ export default function CreatePage() {
                               </div>
                               {infoBtn(key)}
                             </div>
-                            {descBox(key)}
                           </div>
                         ))}
                       </div>
