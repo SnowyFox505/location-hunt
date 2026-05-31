@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '../firebase';
+import { ref, set } from 'firebase/database';
+import { auth, db } from '../firebase';
 
 const AuthContext = createContext(null);
 
@@ -44,6 +45,9 @@ export function AuthProvider({ children }) {
   async function register(displayName, email, password) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: displayName.trim() });
+    await set(ref(db, `users/${cred.user.uid}/stats`), {
+      gamesPlayed: 0, gamesWon: 0, totalDistance: 0, currentStreak: 0, bestStreak: 0,
+    });
     setUser({ ...cred.user, displayName: displayName.trim() });
   }
 

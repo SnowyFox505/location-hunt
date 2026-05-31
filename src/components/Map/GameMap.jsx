@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, useMap, useMapEvent } from 'react-leaflet';
 import PlayerMarker from './PlayerMarker';
 import PingMarker from './PingMarker';
 
@@ -11,10 +11,15 @@ function RecenterMap({ center }) {
   return null;
 }
 
+function MapClickCapture({ onClick }) {
+  useMapEvent('click', (e) => onClick({ lat: e.latlng.lat, lng: e.latlng.lng }));
+  return null;
+}
+
 // Large outer ring used to create the inverted zone mask
 const WORLD_RING = [[-85, -180], [-85, 180], [85, 180], [85, -180]];
 
-export default function GameMap({ center, zoom = 17, zone, players = [], outOfZonePlayers = [], pings = null, myUid, showPlayers = true, showPings = false }) {
+export default function GameMap({ center, zoom = 17, zone, players = [], outOfZonePlayers = [], pings = null, myUid, showPlayers = true, showPings = false, onMapClick = null }) {
   // Keep only the latest ping per hider (replaces old one when new ping arrives)
   const pingEntries = pings
     ? Object.entries(
@@ -71,6 +76,7 @@ export default function GameMap({ center, zoom = 17, zone, players = [], outOfZo
       {showPings && pingEntries.map(({ uid, data, timestamp }) => (
         <PingMarker key={`${uid}-${timestamp}`} uid={uid} data={data} timestamp={timestamp} />
       ))}
+      {onMapClick && <MapClickCapture onClick={onMapClick} />}
       {center && <RecenterMap center={center} />}
     </MapContainer>
   );

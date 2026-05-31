@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ref, runTransaction, set, get } from 'firebase/database';
 import { db } from '../firebase';
+import { vibrate, VIBRATIONS } from '../utils/vibrate';
 
 export function usePings(sessionId, players, myUid, myRole, active) {
   const activeRef = useRef(active);
@@ -46,6 +47,7 @@ export function usePings(sessionId, players, myUid, myRole, active) {
 
         if (Object.keys(pingData).length > 0) {
           await set(ref(db, `sessions/${sessionId}/pings/${Date.now()}`), pingData);
+          vibrate(VIBRATIONS.ping);
         }
 
         await runTransaction(ref(db, `sessions/${sessionId}/game/pingCount`), (c) => (c || 0) + 1);

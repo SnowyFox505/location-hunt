@@ -191,6 +191,32 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Stats */}
+        {profile?.stats && (
+          <div className="mb-6">
+            <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', fontWeight: 500, display: 'block', marginBottom: 12 }}>
+              Statistiken
+            </label>
+            <div style={{
+              ...GLASS,
+              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '16px',
+            }}>
+              {[
+                { icon: '🎮', value: profile.stats.gamesPlayed ?? 0,  label: 'Spiele' },
+                { icon: '🏆', value: profile.stats.gamesWon      ?? 0,  label: 'Siege' },
+                { icon: '🏃', value: `${((profile.stats.totalDistance ?? 0) / 1000).toFixed(1)} km`, label: 'Strecke' },
+                { icon: '🔥', value: `${profile.stats.currentStreak ?? 0} · ${profile.stats.bestStreak ?? 0}`, label: 'Serie' },
+              ].map(({ icon, value, label }) => (
+                <div key={label} style={{ textAlign: 'center', padding: '8px 4px' }}>
+                  <div style={{ fontSize: '1.4rem', marginBottom: 4 }}>{icon}</div>
+                  <div style={{ color: 'white', fontWeight: 700, fontSize: '1.2rem', lineHeight: 1.2 }}>{value}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Save button */}
         <button
           onClick={handleSave}

@@ -283,6 +283,23 @@ function EndContent() {
           </Card>
         )}
 
+        {/* Decoy reveal */}
+        {players.some((p) => p.decoyPingTimestamp) && (
+          <Card style={{ animation: `fadeInUp 0.4s ${1.5 + players.length * 0.07}s ease both`, opacity: 0 }}>
+            <h2 className="text-game-text font-bold mb-3">🎭 Köder</h2>
+            <div className="flex flex-col gap-2">
+              {players.filter((p) => p.decoyPingTimestamp).map((p) => (
+                <div key={p.uid} className="flex items-center gap-2 text-sm">
+                  <span className="text-game-text font-medium">{p.name}</span>
+                  <span className="text-game-muted text-xs">
+                    setzte einen Köder um {format(new Date(p.decoyPingTimestamp), 'HH:mm', { locale: de })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {/* Action buttons */}
         <div
           className="flex flex-col gap-3 mt-2"

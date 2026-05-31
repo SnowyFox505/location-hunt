@@ -1,4 +1,4 @@
-import { ref, set, update, push, get, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, set, update, push, get, query, orderByChild, equalTo, runTransaction } from 'firebase/database';
 import { db } from '../firebase';
 import { generateUniqueCode } from '../utils/sessionCode';
 
@@ -122,5 +122,28 @@ export function useSession() {
     await update(ref(db, `sessions/${sessionId}/meta`), { host: newHostUid });
   }
 
-  return { createSession, joinSession, startGame, setPlayerRole, endGame, resetSession, updateSettings, transferHost };
+  async function updatePlayerStats(uid, myPlayer, gameStats, distanceMeters) {
+    if (!uid || !myPlayer) return;
+    const isHider = myPlayer.role === 'hider';
+    const won = isHider ? !myPlayer.caught : gameStats?.winner === 'seeker';
+    try {
+      await runTransaction(ref(db, `users/${uid}/stats`), (current) => {
+        const s = current || {};
+        const newStreak = isHider && won  ? (s.currentStreak || 0) + 1
+                        : isHider && !won ? 0
+                        : (s.currentStreak || 0); // seeker: streak unchanged
+        return {
+          gamesPlayed:   (s.gamesPlayed   || 0) + 1,
+          gamesWon:      (s.gamesWon      || 0) + (won ? 1 : 0),
+          totalDistance: (s.totalDistance || 0) + Math.round(distanceMeters || 0),
+          currentStreak: newStreak,
+          bestStreak:    Math.max(s.bestStreak || 0, newStreak),
+        };
+      });
+    } catch {
+      // Non-critical — silently ignore
+    }
+  }
+
+  return { createSession, joinSession, startGame, setPlayerRole, endGame, resetSession, updateSettings, transferHost, updatePlayerStats };
 }
