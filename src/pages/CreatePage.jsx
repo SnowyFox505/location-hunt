@@ -361,59 +361,72 @@ export default function CreatePage() {
                     i
                   </button>
                 );
-                const playable = modes.filter((m) => m.available);
-                const comingSoon = modes.filter((m) => !m.available);
+                const classic = modes[0];
+                const secondRow = modes.slice(1); // zombie + coming-soon
                 return (
                   <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.05s ease both', opacity: 0 }}>
                     <h2 className="text-white font-bold mb-3">Spielmodus</h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-                      {/* Playable modes */}
-                      {playable.map(({ key, icon, label }) => (
-                        <div key={key}>
-                          <div style={{ position: 'relative' }}>
-                            <button
-                              onClick={() => setGameMode(key)}
-                              style={{
-                                width: '100%', padding: '14px 12px', borderRadius: 12,
-                                border: `2px solid ${gameMode === key ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
-                                background: gameMode === key ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
-                                cursor: 'pointer', transition: 'all 0.15s',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                              }}
-                            >
-                              <span style={{ fontSize: '1.5rem' }}>{icon}</span>
-                              <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>{label}</span>
-                            </button>
-                            {infoBtn(key)}
-                          </div>
-                        </div>
-                      ))}
+                      {/* Klassisch — full-width */}
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={() => setGameMode('classic')}
+                          style={{
+                            width: '100%', padding: '14px 12px', borderRadius: 12,
+                            border: `2px solid ${gameMode === 'classic' ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
+                            background: gameMode === 'classic' ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
+                            cursor: 'pointer', transition: 'all 0.15s',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                          }}
+                        >
+                          <span style={{ fontSize: '1.5rem' }}>{classic.icon}</span>
+                          <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>{classic.label}</span>
+                        </button>
+                        {infoBtn('classic')}
+                      </div>
 
-                      {/* Coming-soon row */}
+                      {/* Second row: zombie (selectable) + coming-soon */}
                       <div style={{ display: 'flex', gap: 10 }}>
-                        {comingSoon.map(({ key, icon, label }) => (
+                        {secondRow.map(({ key, icon, label, available }) => (
                           <div key={key} style={{ flex: 1 }}>
                             <div style={{ position: 'relative' }}>
-                              <div style={{
-                                padding: '12px 6px', borderRadius: 12,
-                                border: '2px solid rgba(48,54,61,0.5)',
-                                background: 'rgba(13,17,23,0.25)',
-                                textAlign: 'center', opacity: 0.55,
-                              }}>
-                                <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
-                                <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
-                              </div>
-                              <div style={{
-                                position: 'absolute', top: -7, right: -4,
-                                background: '#F97316', color: 'white',
-                                fontSize: '0.52rem', fontWeight: 800,
-                                padding: '2px 6px', borderRadius: 20,
-                                textTransform: 'uppercase', letterSpacing: '0.06em',
-                                boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
-                              }}>
-                                Demnächst
-                              </div>
+                              {available ? (
+                                <button
+                                  onClick={() => setGameMode(key)}
+                                  style={{
+                                    width: '100%', padding: '12px 6px', borderRadius: 12,
+                                    border: `2px solid ${gameMode === key ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
+                                    background: gameMode === key ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
+                                    cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center',
+                                  }}
+                                >
+                                  <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
+                                  <div style={{ color: 'white', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
+                                </button>
+                              ) : (
+                                <div style={{
+                                  padding: '12px 6px', borderRadius: 12,
+                                  border: '2px solid rgba(48,54,61,0.5)',
+                                  background: 'rgba(13,17,23,0.25)',
+                                  textAlign: 'center', opacity: 0.55,
+                                }}>
+                                  <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
+                                  <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
+                                </div>
+                              )}
+                              {!available && (
+                                <div style={{
+                                  position: 'absolute', top: -7, right: -4,
+                                  background: '#F97316', color: 'white',
+                                  fontSize: '0.52rem', fontWeight: 800,
+                                  padding: '2px 6px', borderRadius: 20,
+                                  textTransform: 'uppercase', letterSpacing: '0.06em',
+                                  boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
+                                }}>
+                                  Demnächst
+                                </div>
+                              )}
                               {infoBtn(key)}
                             </div>
                           </div>
