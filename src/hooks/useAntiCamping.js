@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { ref, runTransaction, set } from 'firebase/database';
 import { db } from '../firebase';
 import { haversine } from '../utils/haversine';
-import { vibrate, VIBRATIONS } from '../utils/vibrate';
 
 export function useAntiCamping(sessionId, players, myRole, active) {
   const playersRef = useRef(players);
@@ -50,7 +49,6 @@ export function useAntiCamping(sessionId, players, myRole, active) {
             await set(ref(db, `sessions/${sessionId}/pings/${now}`), {
               [hider.uid]: { lat: hider.lat, lng: hider.lng, name: hider.name },
             });
-            vibrate(VIBRATIONS.campingBonus);
           }
         } catch {
           // Transaction conflict — another seeker already handled this

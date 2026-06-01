@@ -10,7 +10,6 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { useSession } from '../hooks/useSession';
 import { pointInPolygon } from '../utils/pointInPolygon';
 import { haversine } from '../utils/haversine';
-import { vibrate, VIBRATIONS } from '../utils/vibrate';
 import { db } from '../firebase';
 import GameMap from '../components/Map/GameMap';
 import Countdown from '../components/UI/Countdown';
@@ -148,7 +147,6 @@ function GameContent() {
         statsUpdatedRef.current = true;
         updatePlayerStats(user.uid, myPlayerRef.current, statsRef.current, distTrackerRef.current);
       }
-      vibrate(VIBRATIONS.gameEnd);
       navigate(`/game/${sessionId}/end`, { replace: true });
     }
   }, [meta?.status, loading]);
@@ -168,7 +166,6 @@ function GameContent() {
   // Vibrate + flash when hider gets caught (false → true transition)
   useEffect(() => {
     if (!isSeeker && isCaught && !prevCaughtRef.current) {
-      vibrate(VIBRATIONS.caught);
       setShowCaughtFlash(true);
       setTimeout(() => setShowCaughtFlash(false), 1600);
     }
