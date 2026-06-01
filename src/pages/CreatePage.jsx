@@ -242,9 +242,9 @@ export default function CreatePage() {
 
   const modes = [
     { key: 'classic', icon: '🎮', label: 'Klassisch', desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.', available: true },
-    { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Wenn ein Hider gefangen wird, wechselt er sofort die Seite und wird selbst zum Seeker. Das Spiel endet wenn der letzte Hider gefangen ist oder die Zeit abläuft. Spiele können sehr schnell kippen, sobald das Gleichgewicht bricht.', available: false },
-    { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Spielzone zieht sich alle 2 Minuten zusammen — wie in Battle Royale. Wer außerhalb der Zone ist, wird für alle sichtbar. Sehr dramatisch.', available: false },
-    { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Seeker bekommen keine Pings und keine Positionshinweise. Stattdessen haben sie ein Näherungs-Radar: ein pulsierendes Signal, das schneller wird je näher der nächste Hider ist — aber ohne Richtung. Hider gewinnen automatisch wenn die Zeit abläuft. Reines Katz-und-Maus ohne Tech-Hilfe.', available: false },
+    { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Einmal gefangen, immer auf der falschen Seite. Wer als Hider geschnappt wird, wechselt sofort die Seite und jagt von nun an seine ehemaligen Mitspieler. Das Gleichgewicht kann in Sekunden kippen – aus einem Seeker werden zwei, aus zwei werden vier. Das Spiel endet wenn der letzte freie Hider gefangen ist oder die Zeit abläuft.', available: false },
+    { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Zone gibt euch keine Zeit zum Entspannen. Alle 2 Minuten zieht sich die Spielzone zusammen – unaufhaltsam, wie bei Battle Royale. Wer außerhalb der neuen Zone erwischt wird, ist für alle Spieler sichtbar. Je länger das Spiel dauert, desto enger wird es – und desto schwieriger wird es sich zu verstecken.', available: false },
+    { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Vergiss alles was du über Pings weißt. Im Unsichtbar-Modus gibt es keine Positionshinweise, keine Koordinaten, keine Hilfe. Seeker haben nur ein pulsierendes Näherungs-Radar – es wird schneller je näher ein Hider ist, aber verrät keine Richtung. Reines Instinkt-Spiel. Hider gewinnen automatisch wenn die Zeit abläuft – sie müssen nur lange genug durchhalten.', available: false },
   ];
 
   const activeMode = openInfo ? modes.find(m => m.key === openInfo) : null;
