@@ -333,20 +333,26 @@ export default function SettingsPage() {
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (
-        <>
+        <div
+          onClick={() => !deleting && setShowDeleteModal(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            zIndex: 2000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '0 20px',
+          }}
+        >
           <div
-            onClick={() => !deleting && setShowDeleteModal(false)}
-            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 2000 }}
-          />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 2001, width: '90%', maxWidth: 360,
-            backgroundColor: '#161B22',
-            border: '1px solid rgba(239,68,68,0.3)',
-            borderRadius: 20, padding: '28px 24px',
-            animation: 'fadeInUp 0.25s ease both',
-          }}>
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 360,
+              backgroundColor: '#161B22',
+              border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: 20, padding: '28px 24px',
+              animation: 'fadeInUp 0.25s ease both',
+            }}
+          >
             <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 16 }}>⚠️</div>
             <h2 style={{ color: '#E6EDF3', fontWeight: 700, fontSize: '1.15rem', textAlign: 'center', marginBottom: 10 }}>
               Konto wirklich löschen?
@@ -384,7 +390,7 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
