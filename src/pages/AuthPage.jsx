@@ -30,10 +30,11 @@ export default function AuthPage() {
     try {
       if (tab === 'login') {
         await login(email, password);
+        navigate('/home');
       } else {
         await register(displayName, email, password);
+        navigate('/verify-email');
       }
-      navigate('/home');
     } catch (err) {
       setError(mapError(err));
     } finally {

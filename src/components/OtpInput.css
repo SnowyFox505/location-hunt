@@ -1,0 +1,227 @@
+/* OTP Input — game theme, pure CSS animations, no framer-motion */
+
+.otp-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 24px 28px;
+  background-color: #161B22;
+  border-radius: 24px;
+  border: 1px solid #30363D;
+  width: 100%;
+  color: #E6EDF3;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Green glow on success */
+.otp-wrap::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160%; height: 160%;
+  background: radial-gradient(circle, rgba(34,197,94,0.22) 0%, rgba(22,27,34,0) 60%);
+  opacity: 0;
+  transition: opacity 0.9s ease-in-out 1.4s;
+  z-index: 0;
+  pointer-events: none;
+}
+.otp-wrap.otp-success::before { opacity: 1; }
+
+.otp-header, .otp-digits, .otp-foot { position: relative; z-index: 1; }
+
+.otp-header { text-align: center; margin-bottom: 28px; }
+.otp-header h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #E6EDF3; }
+.otp-header p  { font-size: 13px; color: #8B949E; line-height: 1.5; }
+.otp-header p strong { color: #E6EDF3; }
+
+/* Digit row */
+.otp-digits {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+  min-height: 60px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Individual box */
+.otp-box {
+  position: relative;
+  width: 52px;
+  height: 60px;
+  border-radius: 14px;
+  background-color: #21262D;
+  overflow: hidden;
+  flex-shrink: 0;
+  will-change: transform, opacity;
+}
+.otp-box:focus-within { background-color: rgba(59,130,246,0.18); }
+
+/* Spinning border pseudo-element */
+.otp-box::before {
+  content: '';
+  position: absolute;
+  top: -100%; left: -100%;
+  width: 300%; height: 300%;
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+}
+.otp-success .otp-box::before {
+  opacity: 1;
+  background: conic-gradient(from 0deg,
+    transparent 0%, transparent 55%,
+    rgba(59,130,246,0.2) 70%, #3B82F6 92%, #93C5FD 100%);
+  animation: otp-spin 1.0s linear 1 forwards,
+             otp-spin-green 0.9s ease-in-out 1.0s forwards;
+}
+@keyframes otp-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes otp-spin-green {
+  0%,32% { background: conic-gradient(from 0deg, #3B82F6 0%, #60A5FA 50%, #3B82F6 100%); }
+  33%,100%{ background: conic-gradient(from 0deg, #22c55e 0%, #16a34a 50%, #22c55e 100%); }
+}
+
+/* Input field */
+.otp-input {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  background-color: #0D1117;
+  border: none;
+  border-radius: 12px;
+  color: #E6EDF3;
+  font-size: 26px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  z-index: 1;
+  caret-color: #3B82F6;
+}
+
+/* === SUCCESS === */
+.otp-success .otp-input {
+  animation: otp-fade-digit 0.2s ease 1.0s forwards;
+}
+@keyframes otp-fade-digit { to { color: transparent; } }
+
+/* Box 1 — survivor, slides to center (+155px for 6 boxes at 62px pitch) */
+.otp-success .otp-box:nth-child(1) {
+  z-index: 6;
+  animation: otp-box1 0.9s ease-in-out 1.0s forwards,
+             otp-glow-green 1.4s infinite alternate 1.9s;
+}
+@keyframes otp-box1 {
+  0%   { transform: translateX(0)     scale(1)    rotate(0deg);  }
+  33%  { transform: translateX(155px) scale(0.97) rotate(10deg); }
+  66%  { transform: translateX(155px) scale(1.2)  rotate(0deg);  }
+  100% { transform: translateX(155px) scale(1)    rotate(0deg);  }
+}
+
+/* Boxes 2–6: converge toward center, vanish at impact */
+.otp-success .otp-box:nth-child(2) { z-index: 5; animation: otp-box2 0.9s ease-in-out 1.0s forwards; }
+@keyframes otp-box2 {
+  0%,1%  { transform: translateX(0);    opacity: 1; }
+  32%    { transform: translateX(93px); opacity: 1; }
+  33%    { transform: translateX(93px); opacity: 0; }
+  100%   { transform: translateX(93px); opacity: 0; }
+}
+.otp-success .otp-box:nth-child(3) { z-index: 4; animation: otp-box3 0.9s ease-in-out 1.0s forwards; }
+@keyframes otp-box3 {
+  0%,1%  { transform: translateX(0);    opacity: 1; }
+  32%    { transform: translateX(31px); opacity: 1; }
+  33%    { transform: translateX(31px); opacity: 0; }
+  100%   { transform: translateX(31px); opacity: 0; }
+}
+.otp-success .otp-box:nth-child(4) { z-index: 3; animation: otp-box4 0.9s ease-in-out 1.0s forwards; }
+@keyframes otp-box4 {
+  0%,1%  { transform: translateX(0);     opacity: 1; }
+  32%    { transform: translateX(-31px); opacity: 1; }
+  33%    { transform: translateX(-31px); opacity: 0; }
+  100%   { transform: translateX(-31px); opacity: 0; }
+}
+.otp-success .otp-box:nth-child(5) { z-index: 2; animation: otp-box5 0.9s ease-in-out 1.0s forwards; }
+@keyframes otp-box5 {
+  0%,1%  { transform: translateX(0);     opacity: 1; }
+  32%    { transform: translateX(-93px); opacity: 1; }
+  33%    { transform: translateX(-93px); opacity: 0; }
+  100%   { transform: translateX(-93px); opacity: 0; }
+}
+.otp-success .otp-box:nth-child(6) { z-index: 1; animation: otp-box6 0.9s ease-in-out 1.0s forwards; }
+@keyframes otp-box6 {
+  0%,1%  { transform: translateX(0);      opacity: 1; }
+  32%    { transform: translateX(-155px); opacity: 1; }
+  33%    { transform: translateX(-155px); opacity: 0; }
+  100%   { transform: translateX(-155px); opacity: 0; }
+}
+
+@keyframes otp-glow-green {
+  0%   { box-shadow: 0 0 8px  rgba(34,197,94,0.4); }
+  100% { box-shadow: 0 0 28px rgba(34,197,94,1);   }
+}
+
+/* Tick SVG inside box 1 */
+.otp-tick {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.4);
+  width: 28px; height: 28px;
+  opacity: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+.otp-success .otp-box:nth-child(1) .otp-tick {
+  animation: otp-tick-pop 0.5s ease-in-out 1.45s forwards;
+}
+@keyframes otp-tick-pop {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.4);  }
+  60%  { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+  100% { opacity: 1; transform: translate(-50%,-50%) scale(1);    }
+}
+/* Draw the checkmark path */
+.otp-tick-path {
+  stroke-dasharray: 25;
+  stroke-dashoffset: 25;
+}
+.otp-success .otp-box:nth-child(1) .otp-tick-path {
+  animation: otp-draw-tick 0.4s ease-out 1.5s forwards;
+}
+@keyframes otp-draw-tick { to { stroke-dashoffset: 0; } }
+
+/* === ERROR (shake + red tint) === */
+.otp-error .otp-box { animation: otp-shake 0.5s ease-in-out; }
+.otp-error .otp-input { background-color: rgba(239,68,68,0.12); }
+@keyframes otp-shake {
+  0%,100% { transform: translateX(0);   }
+  15%     { transform: translateX(-5px); }
+  35%     { transform: translateX(5px);  }
+  55%     { transform: translateX(-3px); }
+  75%     { transform: translateX(3px);  }
+  90%     { transform: translateX(-1px); }
+}
+
+/* === LOADING (gentle pulse) === */
+.otp-loading .otp-box {
+  animation: otp-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes otp-pulse {
+  0%   { opacity: 1;   }
+  100% { opacity: 0.45; }
+}
+
+/* Footer */
+.otp-foot { font-size: 13px; color: #8B949E; text-align: center; }
+.otp-foot button {
+  background: none; border: none;
+  color: #3B82F6; font-weight: 600;
+  cursor: pointer; padding: 0 0 0 4px;
+  font-size: inherit; font-family: inherit;
+  transition: color 0.2s;
+}
+.otp-foot button:disabled { color: #8B949E; cursor: default; }

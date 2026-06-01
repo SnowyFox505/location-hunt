@@ -11,6 +11,7 @@ import RoleRevealPage from './pages/RoleRevealPage';
 import HidingPage from './pages/HidingPage';
 import GamePage from './pages/GamePage';
 import EndPage from './pages/EndPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 function RootRedirect() {
   const { user, loading } = useAuth();
@@ -25,6 +26,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
