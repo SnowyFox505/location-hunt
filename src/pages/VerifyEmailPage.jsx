@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { get, ref } from 'firebase/database';
 import { db } from '../firebase';
@@ -9,14 +9,15 @@ export default function VerifyEmailPage() {
   const { user, emailVerified, verifyCode, sendVerificationCode } = useAuth();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  // Prevents the emailVerified listener from navigating away mid-animation
-  const [animating, setAnimating] = useState(false);
+  // useRef so the value is immediately visible to the useEffect closure,
+  // unlike useState which only commits asynchronously after the next render.
+  const animatingRef = useRef(false);
 
   // Guard: redirect if not logged in or already verified
   useEffect(() => {
     if (!user) { navigate('/auth', { replace: true }); return; }
-    if (emailVerified === true && !animating) { navigate('/home', { replace: true }); return; }
-  }, [user, emailVerified, animating]);
+    if (emailVerified === true && !animatingRef.current) { navigate('/home', { replace: true }); return; }
+  }, [user, emailVerified]);
 
   // On mount: send new code only if none exists or the existing one expired
   useEffect(() => {
@@ -32,13 +33,12 @@ export default function VerifyEmailPage() {
   }, [user, emailVerified]);
 
   async function handleComplete(code) {
-    setAnimating(true);
+    animatingRef.current = true;
     const ok = await verifyCode(code);
     if (ok) {
-      // Let the merge animation finish (2.5s), then navigate
       setTimeout(() => navigate('/home', { replace: true }), 2500);
     } else {
-      setAnimating(false);
+      animatingRef.current = false;
     }
     return ok;
   }
