@@ -141,8 +141,9 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
               {!loading && zones.length === 0 && (
                 <p className="text-game-muted text-sm text-center py-6">Noch keine gespeicherten Zonen.</p>
               )}
-              {zones.map((zone) => (
-                <div key={zone.id} className="bg-game-bg rounded-xl p-3 border border-game-border">
+              {zones.map((zone, i) => (
+                <div key={zone.id} className="bg-game-bg rounded-xl p-3 border border-game-border"
+                  style={{ animation: `fadeInUp 0.3s ${i * 0.06}s ease both`, opacity: 0 }}>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-game-text font-semibold text-sm">{zone.name}</p>
                     <p className="text-game-muted text-xs">{zone.polygon?.length} Punkte</p>

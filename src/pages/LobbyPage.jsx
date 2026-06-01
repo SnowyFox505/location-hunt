@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ref, set, onValue } from 'firebase/database';
+import { QRCodeSVG } from 'qrcode.react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
@@ -57,9 +58,23 @@ function LobbyContent() {
   const [editingSettings, setEditingSettings] = useState(false);
   const [localSettings, setLocalSettings] = useState({});
   const [savingSettings, setSavingSettings] = useState(false);
+  const [newlyJoinedUids, setNewlyJoinedUids] = useState(new Set());
+  const [showQr, setShowQr] = useState(false);
+  const prevPlayerUidsRef = useRef(new Set());
 
   const randomRoles = !!meta?.randomRoles;
   const connectedRef = useRef(false);
+
+  // Detect newly joined players and flash their row green
+  useEffect(() => {
+    const currentUids = new Set(players.map((p) => p.uid));
+    const newUids = [...currentUids].filter((uid) => !prevPlayerUidsRef.current.has(uid));
+    if (newUids.length > 0 && prevPlayerUidsRef.current.size > 0) {
+      setNewlyJoinedUids(new Set(newUids));
+      setTimeout(() => setNewlyJoinedUids(new Set()), 1500);
+    }
+    prevPlayerUidsRef.current = currentUids;
+  }, [players.length]);
 
   useEffect(() => {
     const connRef = ref(db, '.info/connected');
@@ -160,11 +175,16 @@ function LobbyContent() {
 
         {/* Invite link */}
         <Card style={{ animation: 'fadeInUp 0.4s 0.07s ease both', opacity: 0 }}>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-2">
             <p className="text-game-muted text-xs truncate">{inviteLink}</p>
-            <button onClick={handleCopy} className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${copied ? 'bg-game-green/20 border-game-green text-game-green' : 'border-game-border text-game-muted hover:border-game-blue'}`}>
-              {copied ? 'Kopiert!' : 'Kopieren'}
-            </button>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={handleCopy} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${copied ? 'bg-game-green/20 border-game-green text-game-green' : 'border-game-border text-game-muted hover:border-game-blue'}`}>
+                {copied ? 'Kopiert!' : 'Kopieren'}
+              </button>
+              <button onClick={() => setShowQr(true)} className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-game-border text-game-muted hover:border-game-blue transition-colors cursor-pointer">
+                QR
+              </button>
+            </div>
           </div>
         </Card>
 
@@ -268,9 +288,16 @@ function LobbyContent() {
           <div className="flex flex-col gap-2">
             {players.map((p, i) => (
               <div key={p.uid} className="flex items-center justify-between py-2 border-b border-game-border last:border-0"
-                style={{ animation: `slideInRight 0.3s ${i * 0.07}s ease both`, opacity: 0 }}>
+                style={{
+                  animation: newlyJoinedUids.has(p.uid)
+                    ? 'joinFlash 1.5s ease both'
+                    : `slideInRight 0.3s ${i * 0.07}s ease both`,
+                  opacity: newlyJoinedUids.has(p.uid) ? 1 : 0,
+                  borderRadius: 8,
+                }}>
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-game-blue flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                    style={{ backgroundColor: p.color || '#3B82F6' }}>
                     {(p.name || '?').slice(0, 2).toUpperCase()}
                   </div>
                   <span className="text-game-text text-sm font-medium truncate">
@@ -311,6 +338,23 @@ function LobbyContent() {
           </div>
         </Card>
       </div>
+
+      {/* QR code modal */}
+      {showQr && (
+        <div
+          onClick={() => setShowQr(false)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'fadeIn 0.2s ease both' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: 'white', borderRadius: 20, padding: 28, textAlign: 'center', animation: 'scaleIn 0.22s ease both' }}
+          >
+            <QRCodeSVG value={meta.code} size={200} />
+            <p style={{ color: '#0D1117', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '0.3em', marginTop: 16 }}>{meta.code}</p>
+            <p style={{ color: '#6B7280', fontSize: '0.8rem', marginTop: 6 }}>In der App scannen zum Beitreten</p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-4">
         {isHost ? (

@@ -9,6 +9,9 @@ export function useSession() {
     const sessionId = sessionRef.key;
     const now = Date.now();
 
+    const colorSnap = await get(ref(db, `users/${uid}/color`));
+    const color = colorSnap.val() || '#3B82F6';
+
     await set(sessionRef, {
       meta: {
         host: uid,
@@ -24,6 +27,7 @@ export function useSession() {
       players: {
         [uid]: {
           name: displayName,
+          color,
           role: 'hider',
           lat: null,
           lng: null,
@@ -37,6 +41,7 @@ export function useSession() {
       zone: { polygon: zone },
     });
 
+    localStorage.setItem('lastSession', JSON.stringify({ sessionId, code, ts: now }));
     return { sessionId, code };
   }
 
@@ -57,8 +62,11 @@ export function useSession() {
     if (sessionData.meta.status !== 'waiting') throw new Error('Das Spiel wurde bereits gestartet.');
 
     if (!sessionData.players?.[uid]) {
+      const colorSnap = await get(ref(db, `users/${uid}/color`));
+      const color = colorSnap.val() || '#3B82F6';
       await set(ref(db, `sessions/${sessionId}/players/${uid}`), {
         name: displayName,
+        color,
         role: 'hider',
         lat: null,
         lng: null,
@@ -70,6 +78,7 @@ export function useSession() {
       });
     }
 
+    localStorage.setItem('lastSession', JSON.stringify({ sessionId, code: upperCode, ts: Date.now() }));
     return sessionId;
   }
 

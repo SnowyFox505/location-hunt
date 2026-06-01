@@ -98,6 +98,7 @@ function GameContent() {
   const [placingDecoy, setPlacingDecoy] = useState(false);
   const [decoyError, setDecoyError] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [showCaughtFlash, setShowCaughtFlash] = useState(false);
 
   // Tick every 5s so camping warning recalculates
   useEffect(() => {
@@ -164,10 +165,12 @@ function GameContent() {
     setOutOfZone(!pointInPolygon(position.lat, position.lng, zone));
   }, [position, zone]);
 
-  // Vibrate when hider gets caught (false → true transition)
+  // Vibrate + flash when hider gets caught (false → true transition)
   useEffect(() => {
     if (!isSeeker && isCaught && !prevCaughtRef.current) {
       vibrate(VIBRATIONS.caught);
+      setShowCaughtFlash(true);
+      setTimeout(() => setShowCaughtFlash(false), 1600);
     }
     prevCaughtRef.current = !!isCaught;
   }, [isCaught, isSeeker]);
@@ -278,6 +281,13 @@ function GameContent() {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {showCaughtFlash && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 3000, pointerEvents: 'none',
+          background: 'radial-gradient(ellipse at center, rgba(239,68,68,0.55) 0%, rgba(239,68,68,0.2) 70%)',
+          animation: 'caughtFlash 1.6s ease-out forwards',
+        }} />
+      )}
       <GameMap
         center={zoneCenter}
         zone={zone}

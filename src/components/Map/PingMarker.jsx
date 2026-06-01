@@ -6,7 +6,7 @@ import { de } from 'date-fns/locale';
 function makePingIcon(initials) {
   return L.divIcon({
     className: '',
-    html: `<div style="width:36px;height:36px;background:#EF4444;border-radius:50%;border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;color:white;box-shadow:0 0 12px rgba(239,68,68,0.6);font-family:Inter,system-ui,sans-serif;">${initials}</div>`,
+    html: `<div style="width:36px;height:36px;background:#EF4444;border-radius:50%;border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;color:white;box-shadow:0 0 12px rgba(239,68,68,0.6);font-family:Inter,system-ui,sans-serif;animation:pingPop 0.4s ease-out both;">${initials}</div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
   });
