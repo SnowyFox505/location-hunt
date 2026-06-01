@@ -27,7 +27,7 @@ const GLASS = {
 };
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, deleteAccount } = useAuth();
   const { profile, saveDisplayName, saveColor, savePhoto, removePhoto } = useUserProfile(user?.uid);
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -39,6 +39,23 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      navigate('/auth', { replace: true });
+    } catch (err) {
+      if (err.code === 'auth/requires-recent-login') {
+        alert('Sicherheitshinweis: Bitte melde dich ab und erneut an, dann kannst du dein Konto löschen.');
+      }
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
+  }
 
   async function handleResetStats() {
     await set(ref(db, `users/${user.uid}/stats`), {
@@ -293,7 +310,82 @@ export default function SettingsPage() {
         >
           {saved ? '✓ Gespeichert' : saving ? 'Speichert…' : 'Speichern'}
         </button>
+
+        {/* Delete account button */}
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          style={{
+            width: '100%', marginTop: 12,
+            fontWeight: 600, padding: '13px',
+            borderRadius: 14, cursor: 'pointer',
+            background: 'rgba(239,68,68,0.08)',
+            color: 'rgba(239,68,68,0.7)',
+            fontSize: '0.95rem',
+            border: '1px solid rgba(239,68,68,0.2)',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#EF4444'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = 'rgba(239,68,68,0.7)'; }}
+        >
+          Konto löschen
+        </button>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <>
+          <div
+            onClick={() => !deleting && setShowDeleteModal(false)}
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 2000 }}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 2001, width: '90%', maxWidth: 360,
+            backgroundColor: '#161B22',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 20, padding: '28px 24px',
+            animation: 'fadeInUp 0.25s ease both',
+          }}>
+            <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 16 }}>⚠️</div>
+            <h2 style={{ color: '#E6EDF3', fontWeight: 700, fontSize: '1.15rem', textAlign: 'center', marginBottom: 10 }}>
+              Konto wirklich löschen?
+            </h2>
+            <p style={{ color: '#8B949E', fontSize: '0.875rem', textAlign: 'center', lineHeight: 1.5, marginBottom: 24 }}>
+              Dein Konto, alle gespeicherten Zonen und Statistiken werden <strong style={{ color: '#E6EDF3' }}>unwiderruflich</strong> gelöscht.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                style={{
+                  flex: 1, padding: '13px', borderRadius: 12,
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#8B949E', fontWeight: 600,
+                  border: '1px solid #30363D', cursor: 'pointer', fontSize: '0.95rem',
+                }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                style={{
+                  flex: 1, padding: '13px', borderRadius: 12,
+                  background: deleting ? 'rgba(239,68,68,0.4)' : '#EF4444',
+                  color: 'white', fontWeight: 700,
+                  border: 'none', cursor: deleting ? 'default' : 'pointer',
+                  fontSize: '0.95rem',
+                  boxShadow: '0 4px 16px rgba(239,68,68,0.35)',
+                  transition: 'background 0.2s',
+                }}
+              >
+                {deleting ? 'Löschen…' : 'Ja, löschen'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

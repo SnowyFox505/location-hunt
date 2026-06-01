@@ -5,6 +5,7 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  deleteUser,
 } from 'firebase/auth';
 import { ref, set, update, remove, get, onValue } from 'firebase/database';
 import emailjs from '@emailjs/browser';
@@ -111,10 +112,20 @@ export function AuthProvider({ children }) {
     await signOut(auth);
   }
 
+  async function deleteAccount() {
+    if (!user) return;
+    await Promise.all([
+      remove(ref(db, `users/${user.uid}`)),
+      remove(ref(db, `savedZones/${user.uid}`)),
+      remove(ref(db, `pendingVerifications/${user.uid}`)),
+    ]);
+    await deleteUser(auth.currentUser);
+  }
+
   const value = {
     user, loading, emailVerified,
     register, login, logout, mapError,
-    sendVerificationCode, verifyCode,
+    sendVerificationCode, verifyCode, deleteAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
