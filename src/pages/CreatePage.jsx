@@ -255,18 +255,19 @@ export default function CreatePage() {
     <>
       {/* ── Mode info popup ── */}
       {activeMode && (
-        <>
+        <div
+          onClick={() => setOpenInfo(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease both' }}
+        >
           <div
-            onClick={() => setOpenInfo(null)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 3000, animation: 'fadeIn 0.2s ease both' }}
-          />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            zIndex: 3001, width: 'min(320px, calc(100vw - 40px))',
-            background: '#161B22', border: '1px solid #30363D', borderRadius: 16,
-            padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-            animation: 'scaleIn 0.22s ease both',
-          }}>
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative', width: '100%', maxWidth: 320,
+              background: '#161B22', border: '1px solid #30363D', borderRadius: 16,
+              padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+              animation: 'scaleIn 0.22s ease both',
+            }}
+          >
             <button
               onClick={() => setOpenInfo(null)}
               style={{
@@ -294,7 +295,7 @@ export default function CreatePage() {
               {activeMode.desc}
             </p>
           </div>
-        </>
+        </div>
       )}
 
       {/* ── Step 1: Settings ── */}
