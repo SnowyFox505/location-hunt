@@ -361,8 +361,6 @@ export default function CreatePage() {
                     i
                   </button>
                 );
-                const classic = modes[0];
-                const comingSoon = modes.slice(1);
                 const playable = modes.filter((m) => m.available);
                 const comingSoon = modes.filter((m) => !m.available);
                 return (
