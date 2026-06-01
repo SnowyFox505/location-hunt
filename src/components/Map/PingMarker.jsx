@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { format } from 'date-fns';
@@ -17,13 +18,12 @@ export default function PingMarker({ uid, data, timestamp }) {
 
   const initials = (data.name || '?').slice(0, 2).toUpperCase();
   const timeStr = format(new Date(timestamp), 'HH:mm', { locale: de });
+  const icon = useMemo(() => makePingIcon(initials), [initials]);
 
   return (
-    <Marker position={[data.lat, data.lng]} icon={makePingIcon(initials)}>
-      <Tooltip permanent direction="top" offset={[0, -20]}>
-        <span style={{ color: '#E6EDF3', fontSize: 11 }}>
-          {data.name} – {timeStr}
-        </span>
+    <Marker position={[data.lat, data.lng]} icon={icon}>
+      <Tooltip permanent direction="top" offset={[0, -20]} className="player-tooltip">
+        {data.name} – {timeStr}
       </Tooltip>
     </Marker>
   );
