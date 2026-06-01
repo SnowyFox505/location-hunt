@@ -14,8 +14,8 @@ const HIDING_DURATION_OPTIONS = [1, 2, 3, 5, 10];
 function KickModal({ reason, sessionCode, onConfirm }) {
   const isDisconnect = reason === 'disconnect';
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div className="bg-game-card border border-game-border rounded-2xl p-6 w-full max-w-sm text-center">
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', animation: 'fadeIn 0.2s ease both' }}>
+      <div className="bg-game-card border border-game-border rounded-2xl p-6 w-full max-w-sm text-center" style={{ animation: 'scaleIn 0.25s ease both' }}>
         <div className="text-4xl mb-3">{isDisconnect ? '📶' : '🚪'}</div>
         <h2 className="text-game-text text-xl font-bold mb-2">
           {isDisconnect ? 'Verbindung unterbrochen' : 'Lobby geschlossen'}
@@ -159,7 +159,7 @@ function LobbyContent() {
         </Card>
 
         {/* Invite link */}
-        <Card>
+        <Card style={{ animation: 'fadeInUp 0.4s 0.07s ease both', opacity: 0 }}>
           <div className="flex items-center justify-between gap-3">
             <p className="text-game-muted text-xs truncate">{inviteLink}</p>
             <button onClick={handleCopy} className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${copied ? 'bg-game-green/20 border-game-green text-game-green' : 'border-game-border text-game-muted hover:border-game-blue'}`}>
@@ -169,7 +169,7 @@ function LobbyContent() {
         </Card>
 
         {/* Settings — with inline edit for host */}
-        <Card>
+        <Card style={{ animation: 'fadeInUp 0.4s 0.14s ease both', opacity: 0 }}>
           {!editingSettings ? (
             <div className="flex items-center justify-between">
               <div className="flex gap-3 text-game-muted text-xs flex-wrap">
@@ -184,7 +184,7 @@ function LobbyContent() {
               )}
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4" style={{ animation: 'fadeInUp 0.2s ease both' }}>
               <div className="flex items-center justify-between mb-1">
                 <p className="text-game-text text-sm font-semibold">Einstellungen</p>
                 <button onClick={() => setEditingSettings(false)} className="text-game-muted hover:text-game-text cursor-pointer text-sm">✕</button>
@@ -243,7 +243,7 @@ function LobbyContent() {
 
         {/* Random roles toggle */}
         {isHost && (
-          <Card>
+          <Card style={{ animation: 'fadeInUp 0.4s 0.21s ease both', opacity: 0 }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-game-text text-sm font-semibold">Zufällige Rollen</p>
@@ -263,7 +263,7 @@ function LobbyContent() {
         )}
 
         {/* Players list */}
-        <Card>
+        <Card style={{ animation: 'fadeInUp 0.4s 0.28s ease both', opacity: 0 }}>
           <h2 className="text-game-text font-bold mb-3">Spieler ({players.length})</h2>
           <div className="flex flex-col gap-2">
             {players.map((p, i) => (

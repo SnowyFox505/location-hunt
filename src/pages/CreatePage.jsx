@@ -83,7 +83,7 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
   return (
     <>
       <div
-        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000 }}
+        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000, animation: 'fadeIn 0.2s ease both' }}
         onClick={onClose}
       />
       <div style={{
@@ -91,6 +91,7 @@ function ZoneLibrary({ uid, currentPolygon, onLoad, onClose }) {
         backgroundColor: '#161B22', borderTop: '1px solid #30363D',
         borderRadius: '20px 20px 0 0', maxHeight: '75vh',
         display: 'flex', flexDirection: 'column',
+        animation: 'slideInUp 0.3s ease both',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#30363D' }} />
@@ -256,13 +257,14 @@ export default function CreatePage() {
         <>
           <div
             onClick={() => setOpenInfo(null)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 3000 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 3000, animation: 'fadeIn 0.2s ease both' }}
           />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             zIndex: 3001, width: 'min(320px, calc(100vw - 40px))',
             background: '#161B22', border: '1px solid #30363D', borderRadius: 16,
             padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            animation: 'scaleIn 0.22s ease both',
           }}>
             <button
               onClick={() => setOpenInfo(null)}
@@ -360,7 +362,7 @@ export default function CreatePage() {
                 const classic = modes[0];
                 const comingSoon = modes.slice(1);
                 return (
-                  <div style={GLASS_CARD}>
+                  <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.05s ease both', opacity: 0 }}>
                     <h2 className="text-white font-bold mb-3">Spielmodus</h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
@@ -421,7 +423,7 @@ export default function CreatePage() {
               })()}
 
               {/* Spielzeit */}
-              <div style={GLASS_CARD}>
+              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.13s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Spielzeit</h2>
                 <div className="flex flex-wrap gap-2">
                   {GAME_DURATION_OPTIONS.map((v) => (
@@ -434,7 +436,7 @@ export default function CreatePage() {
               </div>
 
               {/* Versteckzeit */}
-              <div style={GLASS_CARD}>
+              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.21s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Versteckzeit</h2>
                 <div className="flex flex-wrap gap-2">
                   {HIDING_DURATION_OPTIONS.map((v) => (
@@ -447,7 +449,7 @@ export default function CreatePage() {
               </div>
 
               {/* Ping-Intervall */}
-              <div style={GLASS_CARD}>
+              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.29s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Ping-Intervall</h2>
                 <select
                   value={settings.pingInterval}
@@ -475,7 +477,9 @@ export default function CreatePage() {
                 </p>
               </div>
 
-              <Button onClick={() => setStep(2)}>Weiter: Zone zeichnen →</Button>
+              <div style={{ animation: 'fadeInUp 0.4s 0.37s ease both', opacity: 0 }}>
+                <Button onClick={() => setStep(2)}>Weiter: Zone zeichnen →</Button>
+              </div>
             </div>
           </div>
         </div>
