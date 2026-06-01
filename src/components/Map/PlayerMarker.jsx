@@ -49,8 +49,8 @@ export default function PlayerMarker({ player, isMe, outOfZone = false }) {
 
   return (
     <Marker position={[player.lat, player.lng]} icon={icon}>
-      <Tooltip permanent={false} direction="top" offset={[0, -20]}>
-        <span style={{ color: '#E6EDF3', fontSize: 12 }}>{label}</span>
+      <Tooltip permanent={false} direction="top" offset={[0, -20]} className="player-tooltip">
+        {label}
       </Tooltip>
     </Marker>
   );
