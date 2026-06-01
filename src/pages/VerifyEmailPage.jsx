@@ -9,17 +9,31 @@ export default function VerifyEmailPage() {
   const { user, emailVerified, verifyCode, sendVerificationCode } = useAuth();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  // useRef so the value is immediately visible to the useEffect closure,
-  // unlike useState which only commits asynchronously after the next render.
-  const animatingRef = useRef(false);
 
-  // Guard: redirect if not logged in or already verified
+  // Once we've decided the user legitimately belongs here (emailVerified === false),
+  // we set this ref so that subsequent emailVerified changes (caused by the
+  // verification itself) never trigger the guard effect. Navigation after
+  // successful verification is handled exclusively by the setTimeout below.
+  const lockedInRef = useRef(false);
+
+  // Guard effect: runs on every emailVerified change, but only acts before lock-in.
   useEffect(() => {
+    if (emailVerified === null) return; // still loading, wait
+    if (lockedInRef.current) return;   // user is actively verifying — hands off
+
     if (!user) { navigate('/auth', { replace: true }); return; }
-    if (emailVerified === true && !animatingRef.current) { navigate('/home', { replace: true }); return; }
+    if (emailVerified === true) { navigate('/home', { replace: true }); return; }
+
+    // emailVerified === false: user genuinely needs to verify. Lock in.
+    lockedInRef.current = true;
   }, [user, emailVerified]);
 
-  // On mount: send new code only if none exists or the existing one expired
+  // Safety: handle logout at any point
+  useEffect(() => {
+    if (user === null) navigate('/auth', { replace: true });
+  }, [user]);
+
+  // Send a code if none exists or the existing one expired
   useEffect(() => {
     if (!user || emailVerified !== false) return;
     (async () => {
@@ -33,12 +47,10 @@ export default function VerifyEmailPage() {
   }, [user, emailVerified]);
 
   async function handleComplete(code) {
-    animatingRef.current = true;
     const ok = await verifyCode(code);
     if (ok) {
+      // Let the CSS merge animation play (~2s), then navigate
       setTimeout(() => navigate('/home', { replace: true }), 2500);
-    } else {
-      animatingRef.current = false;
     }
     return ok;
   }
