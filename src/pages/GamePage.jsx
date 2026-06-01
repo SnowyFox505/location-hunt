@@ -57,17 +57,22 @@ function CatchMenu({ uncaughtHiders, onClaim, onClose }) {
   );
 }
 
-function CatchConfirmModal({ request, onConfirm, onDeny }) {
+function CatchConfirmModal({ request, onConfirm, onDeny, isZombieMode }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)',
       zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
     }}>
       <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, textAlign: 'center' }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>👀</div>
-        <h2 className="text-game-text text-xl font-bold mb-2">Wurdest du gefunden?</h2>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>{isZombieMode ? '🧟' : '👀'}</div>
+        <h2 className="text-game-text text-xl font-bold mb-2">
+          {isZombieMode ? 'Wurdest du gebissen?' : 'Wurdest du gefunden?'}
+        </h2>
         <p className="text-game-muted text-sm mb-6">
-          <span className="text-game-blue font-semibold">{request.seekerName}</span> behauptet, dich gefunden zu haben. Stimmt das?
+          <span className="text-game-blue font-semibold">{request.seekerName}</span>{' '}
+          {isZombieMode
+            ? 'hat dich erwischt! Du wirst zum Zombie und jagst jetzt deine ehemaligen Mitspieler.'
+            : 'behauptet, dich gefunden zu haben. Stimmt das?'}
         </p>
         <div className="flex gap-3">
           <button onClick={onDeny}
@@ -75,8 +80,8 @@ function CatchConfirmModal({ request, onConfirm, onDeny }) {
             Nein
           </button>
           <button onClick={onConfirm}
-            style={{ flex: 1, padding: '14px', backgroundColor: '#EF4444', border: 'none', borderRadius: 12, color: 'white', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-            Ja, gefangen!
+            style={{ flex: 1, padding: '14px', backgroundColor: isZombieMode ? '#A855F7' : '#EF4444', border: 'none', borderRadius: 12, color: 'white', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+            {isZombieMode ? 'Ja, ich bin Zombie! 🧟' : 'Ja, gefangen!'}
           </button>
         </div>
       </div>
@@ -98,6 +103,7 @@ function GameContent() {
   const [decoyError, setDecoyError] = useState('');
   const [now, setNow] = useState(Date.now());
   const [showCaughtFlash, setShowCaughtFlash] = useState(false);
+  const [showZombieFlash, setShowZombieFlash] = useState(false);
 
   // Tick every 5s so camping warning recalculates
   useEffect(() => {
@@ -112,10 +118,13 @@ function GameContent() {
   const myPlayerRef = useRef(null);
   const statsRef = useRef(null);
   const prevCaughtRef = useRef(false);
+  const prevIsZombieRef = useRef(false);
 
+  const isZombieMode = meta?.gameMode === 'zombie';
   const myPlayer = players.find((p) => p.uid === user.uid);
   const isSeeker = myPlayer?.role === 'seeker';
   const isCaught = myPlayer?.caught;
+  const isZombie = myPlayer?.zombie === true;
 
   // Keep refs current
   myPlayerRef.current = myPlayer;
@@ -163,7 +172,7 @@ function GameContent() {
     setOutOfZone(!pointInPolygon(position.lat, position.lng, zone));
   }, [position, zone]);
 
-  // Vibrate + flash when hider gets caught (false → true transition)
+  // Flash when hider gets caught (classic mode)
   useEffect(() => {
     if (!isSeeker && isCaught && !prevCaughtRef.current) {
       setShowCaughtFlash(true);
@@ -171,6 +180,15 @@ function GameContent() {
     }
     prevCaughtRef.current = !!isCaught;
   }, [isCaught, isSeeker]);
+
+  // Green flash when hider becomes a zombie
+  useEffect(() => {
+    if (isZombie && !prevIsZombieRef.current) {
+      setShowZombieFlash(true);
+      setTimeout(() => setShowZombieFlash(false), 1600);
+    }
+    prevIsZombieRef.current = !!isZombie;
+  }, [isZombie]);
 
   // Game-end timer
   useEffect(() => {
@@ -200,14 +218,27 @@ function GameContent() {
 
   async function handleConfirmCatch() {
     const now = Date.now();
-    await update(ref(db, `sessions/${sessionId}/players/${user.uid}`), {
-      caught: true, caughtAt: now, caughtBy: pendingRequest.seekerUid,
-    });
-    await remove(ref(db, `sessions/${sessionId}/catchRequests/${user.uid}`));
-
-    const allHiders = players.filter((p) => p.role === 'hider');
-    const allCaught = allHiders.every((p) => p.uid === user.uid || p.caught);
-    if (allCaught) await handleGameEnd('seeker');
+    if (isZombieMode) {
+      // Convert hider into a zombie seeker
+      await update(ref(db, `sessions/${sessionId}/players/${user.uid}`), {
+        role: 'seeker',
+        zombie: true,
+        caughtAt: now,
+        caughtBy: pendingRequest.seekerUid,
+      });
+      await remove(ref(db, `sessions/${sessionId}/catchRequests/${user.uid}`));
+      // Game ends when no free hiders remain (exclude self, already converted)
+      const remainingHiders = players.filter((p) => p.role === 'hider' && p.uid !== user.uid);
+      if (remainingHiders.length === 0) await handleGameEnd('seeker');
+    } else {
+      await update(ref(db, `sessions/${sessionId}/players/${user.uid}`), {
+        caught: true, caughtAt: now, caughtBy: pendingRequest.seekerUid,
+      });
+      await remove(ref(db, `sessions/${sessionId}/catchRequests/${user.uid}`));
+      const allHiders = players.filter((p) => p.role === 'hider');
+      const allCaught = allHiders.every((p) => p.uid === user.uid || p.caught);
+      if (allCaught) await handleGameEnd('seeker');
+    }
   }
 
   async function handleDenyCatch() {
@@ -285,6 +316,13 @@ function GameContent() {
           animation: 'caughtFlash 1.6s ease-out forwards',
         }} />
       )}
+      {showZombieFlash && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 3000, pointerEvents: 'none',
+          background: 'radial-gradient(ellipse at center, rgba(168,85,247,0.55) 0%, rgba(168,85,247,0.2) 70%)',
+          animation: 'caughtFlash 1.6s ease-out forwards',
+        }} />
+      )}
       <GameMap
         center={zoneCenter}
         zone={zone}
@@ -326,10 +364,18 @@ function GameContent() {
         <div style={{ backgroundColor: 'rgba(13,17,23,0.97)', borderBottom: '1px solid #30363D' }} className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              {isSeeker
+              {isSeeker && isZombieMode && isZombie
+                ? <span style={{ color: '#A855F7' }} className="text-xs font-bold uppercase tracking-wide">Zombie 🧟</span>
+                : isSeeker
                 ? <span className="text-game-red text-xs font-bold uppercase tracking-wide">Seeker</span>
                 : <span className="text-game-green text-xs font-bold uppercase tracking-wide">{isCaught ? 'Gefangen' : 'Versteckt'}</span>}
-              {isSeeker && <p className="text-game-muted text-xs mt-0.5">{caughtCount} von {hiders.length} gefangen</p>}
+              {isSeeker && (
+                <p className="text-game-muted text-xs mt-0.5">
+                  {isZombieMode
+                    ? `${uncaughtHiders.length} Hider noch frei`
+                    : `${caughtCount} von ${hiders.length} gefangen`}
+                </p>
+              )}
             </div>
             {game?.endsAt && (
               <div className="text-right">
@@ -437,7 +483,7 @@ function GameContent() {
       )}
 
       {pendingRequest && (
-        <CatchConfirmModal request={pendingRequest} onConfirm={handleConfirmCatch} onDeny={handleDenyCatch} />
+        <CatchConfirmModal request={pendingRequest} onConfirm={handleConfirmCatch} onDeny={handleDenyCatch} isZombieMode={isZombieMode} />
       )}
     </div>
   );

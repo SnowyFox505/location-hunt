@@ -29,6 +29,7 @@ export default function PlayerMarker({ player, isMe, outOfZone = false }) {
   const initials = (player.name || '?').slice(0, 2).toUpperCase();
   let roleColor;
   if (player.caught) roleColor = '#6B7280';
+  else if (player.zombie) roleColor = '#A855F7';
   else if (outOfZone) roleColor = '#F97316';
   else if (player.role === 'hider') roleColor = '#22C55E';
   else roleColor = isMe ? '#3B82F6' : '#60A5FA';

@@ -234,7 +234,7 @@ export default function CreatePage() {
     setLoading(true);
     setError('');
     try {
-      const { sessionId } = await createSession(user.uid, user.displayName || user.email, settings, polygon);
+      const { sessionId } = await createSession(user.uid, user.displayName || user.email, settings, polygon, gameMode);
       navigate(`/lobby/${sessionId}`);
     } catch (e) {
       setError('Fehler beim Erstellen der Session. Bitte versuche es erneut.');
@@ -244,7 +244,7 @@ export default function CreatePage() {
 
   const modes = [
     { key: 'classic', icon: '🎮', label: 'Klassisch', desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.', available: true },
-    { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Einmal gefangen, immer auf der falschen Seite. Wer als Hider geschnappt wird, wechselt sofort die Seite und jagt von nun an seine ehemaligen Mitspieler. Das Gleichgewicht kann in Sekunden kippen – aus einem Seeker werden zwei, aus zwei werden vier. Das Spiel endet wenn der letzte freie Hider gefangen ist oder die Zeit abläuft.', available: false },
+    { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Einmal gefangen, immer auf der falschen Seite. Wer als Hider geschnappt wird, wechselt sofort die Seite und jagt von nun an seine ehemaligen Mitspieler. Das Gleichgewicht kann in Sekunden kippen – aus einem Seeker werden zwei, aus zwei werden vier. Das Spiel endet wenn der letzte freie Hider gefangen ist oder die Zeit abläuft.', available: true },
     { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Zone gibt euch keine Zeit zum Entspannen. Alle 2 Minuten zieht sich die Spielzone zusammen – unaufhaltsam, wie bei Battle Royale. Wer außerhalb der neuen Zone erwischt wird, ist für alle Spieler sichtbar. Je länger das Spiel dauert, desto enger wird es – und desto schwieriger wird es sich zu verstecken.', available: false },
     { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Vergiss alles was du über Pings weißt. Im Unsichtbar-Modus gibt es keine Positionshinweise, keine Koordinaten, keine Hilfe. Seeker haben nur ein pulsierendes Näherungs-Radar – es wird schneller je näher ein Hider ist, aber verrät keine Richtung. Reines Instinkt-Spiel. Hider gewinnen automatisch wenn die Zeit abläuft – sie müssen nur lange genug durchhalten.', available: false },
   ];
@@ -363,30 +363,34 @@ export default function CreatePage() {
                 );
                 const classic = modes[0];
                 const comingSoon = modes.slice(1);
+                const playable = modes.filter((m) => m.available);
+                const comingSoon = modes.filter((m) => !m.available);
                 return (
                   <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.05s ease both', opacity: 0 }}>
                     <h2 className="text-white font-bold mb-3">Spielmodus</h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-                      {/* Klassisch — full-width selectable */}
-                      <div>
-                        <div style={{ position: 'relative' }}>
-                          <button
-                            onClick={() => setGameMode('classic')}
-                            style={{
-                              width: '100%', padding: '14px 12px', borderRadius: 12,
-                              border: `2px solid ${gameMode === 'classic' ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
-                              background: gameMode === 'classic' ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
-                              cursor: 'pointer', transition: 'all 0.15s',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                            }}
-                          >
-                            <span style={{ fontSize: '1.5rem' }}>{classic.icon}</span>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>{classic.label}</span>
-                          </button>
-                          {infoBtn('classic')}
+                      {/* Playable modes */}
+                      {playable.map(({ key, icon, label }) => (
+                        <div key={key}>
+                          <div style={{ position: 'relative' }}>
+                            <button
+                              onClick={() => setGameMode(key)}
+                              style={{
+                                width: '100%', padding: '14px 12px', borderRadius: 12,
+                                border: `2px solid ${gameMode === key ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
+                                background: gameMode === key ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
+                                cursor: 'pointer', transition: 'all 0.15s',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                              }}
+                            >
+                              <span style={{ fontSize: '1.5rem' }}>{icon}</span>
+                              <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>{label}</span>
+                            </button>
+                            {infoBtn(key)}
+                          </div>
                         </div>
-                      </div>
+                      ))}
 
                       {/* Coming-soon row */}
                       <div style={{ display: 'flex', gap: 10 }}>
@@ -402,7 +406,6 @@ export default function CreatePage() {
                                 <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
                                 <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
                               </div>
-                              {/* Demnächst badge */}
                               <div style={{
                                 position: 'absolute', top: -7, right: -4,
                                 background: '#F97316', color: 'white',

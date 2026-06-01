@@ -200,6 +200,7 @@ function LobbyContent() {
           {!editingSettings ? (
             <div className="flex items-center justify-between">
               <div className="flex gap-3 text-game-muted text-xs flex-wrap">
+                <span>{meta.gameMode === 'zombie' ? '🧟 Zombie' : '🎮 Klassisch'}</span>
                 <span>⏱ {meta.settings?.gameDuration} Min</span>
                 <span>🙈 {meta.settings?.hidingDuration} Min</span>
                 <span>📡 Ping alle {meta.settings?.pingInterval} Min</span>

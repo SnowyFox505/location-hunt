@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { generateUniqueCode } from '../utils/sessionCode';
 
 export function useSession() {
-  async function createSession(uid, displayName, settings, zone) {
+  async function createSession(uid, displayName, settings, zone, gameMode = 'classic') {
     const code = generateUniqueCode();
     const sessionRef = push(ref(db, 'sessions'));
     const sessionId = sessionRef.key;
@@ -18,6 +18,7 @@ export function useSession() {
         code,
         status: 'waiting',
         createdAt: now,
+        gameMode,
         settings: {
           gameDuration: settings.gameDuration,
           hidingDuration: settings.hidingDuration,
