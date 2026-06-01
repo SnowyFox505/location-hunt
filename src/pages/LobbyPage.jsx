@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ref, set, onValue } from 'firebase/database';
+import { ref, set, remove, onValue } from 'firebase/database';
 import { QRCodeSVG } from 'qrcode.react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -131,6 +131,13 @@ function LobbyContent() {
 
   async function handleHostLeave() {
     await set(ref(db, `sessions/${sessionId}/meta/status`), 'closed');
+    localStorage.removeItem('lastSession');
+    navigate('/home', { replace: true });
+  }
+
+  async function handlePlayerLeave() {
+    await remove(ref(db, `sessions/${sessionId}/players/${user.uid}`));
+    localStorage.removeItem('lastSession');
     navigate('/home', { replace: true });
   }
 
@@ -153,7 +160,7 @@ function LobbyContent() {
   return (
     <div className="pt-safe flex flex-col min-h-full bg-game-bg px-4 py-6 max-w-sm mx-auto w-full">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={isHost ? handleHostLeave : () => navigate('/home')} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
+        <button onClick={isHost ? handleHostLeave : handlePlayerLeave} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
         <h1 className="text-game-text font-bold text-xl">Lobby</h1>
       </div>
 
