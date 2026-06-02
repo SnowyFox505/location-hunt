@@ -8,6 +8,7 @@ import { usePings } from '../hooks/usePings';
 import { useAntiCamping } from '../hooks/useAntiCamping';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useSession } from '../hooks/useSession';
+import { useShrinkZone } from '../hooks/useShrinkZone';
 import { pointInPolygon } from '../utils/pointInPolygon';
 import { haversine } from '../utils/haversine';
 import { db } from '../firebase';
@@ -91,7 +92,7 @@ function CatchConfirmModal({ request, onConfirm, onDeny, isZombieMode }) {
 
 function GameContent() {
   const { sessionId } = useParams();
-  const { meta, players, zone, game, pings, catchRequests, stats, loading } = useGame();
+  const { meta, players, zone, game, pings, catchRequests, stats, shrinkZones, loading } = useGame();
   const { user } = useAuth();
   const { updatePlayerStats } = useSession();
   const navigate = useNavigate();
@@ -104,10 +105,11 @@ function GameContent() {
   const [now, setNow] = useState(Date.now());
   const [showCaughtFlash, setShowCaughtFlash] = useState(false);
   const [showZombieFlash, setShowZombieFlash] = useState(false);
+  const [shrinkGrace, setShrinkGrace] = useState(false);
 
-  // Tick every 5s so camping warning recalculates
+  // Tick every second for shrink countdown + camping warning
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 5000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -119,12 +121,17 @@ function GameContent() {
   const statsRef = useRef(null);
   const prevCaughtRef = useRef(false);
   const prevIsZombieRef = useRef(false);
+  const prevShrinkStepRef = useRef(null); // null = uninitialized (avoids false-positive grace on join)
 
   const isZombieMode = meta?.gameMode === 'zombie';
+  const isShrinkMode = meta?.gameMode === 'shrink';
   const myPlayer = players.find((p) => p.uid === user.uid);
   const isSeeker = myPlayer?.role === 'seeker';
   const isCaught = myPlayer?.caught;
   const isZombie = myPlayer?.zombie === true;
+  const currentShrinkStep = game?.currentShrinkStep || 0;
+  // Use the current shrink zone for out-of-zone detection; fall back to original zone
+  const activeZone = isShrinkMode && shrinkZones ? shrinkZones[currentShrinkStep] : zone;
 
   // Keep refs current
   myPlayerRef.current = myPlayer;
@@ -132,6 +139,7 @@ function GameContent() {
 
   const { position } = useGPS(sessionId, user.uid, true);
   usePings(sessionId, players, user.uid, myPlayer?.role, meta?.status === 'playing');
+  useShrinkZone(sessionId, game, shrinkZones?.length || 0, myPlayer?.role, isShrinkMode && meta?.status === 'playing');
 
   // Anti-camping: only active when ping interval is 3 min or longer
   const antiCampingActive = meta?.status === 'playing' && (meta?.settings?.pingInterval ?? 3) >= 3;
@@ -166,11 +174,12 @@ function GameContent() {
     setPendingRequest(catchRequests[user.uid] || null);
   }, [catchRequests, isSeeker, isCaught, user.uid]);
 
-  // Out-of-zone detection
+  // Out-of-zone detection (uses current shrink step; grace period disables penalty)
   useEffect(() => {
-    if (!position || !zone) return;
-    setOutOfZone(!pointInPolygon(position.lat, position.lng, zone));
-  }, [position, zone]);
+    if (!position || !activeZone) return;
+    if (isShrinkMode && shrinkGrace) { setOutOfZone(false); return; }
+    setOutOfZone(!pointInPolygon(position.lat, position.lng, activeZone));
+  }, [position, activeZone, shrinkGrace, isShrinkMode]);
 
   // Flash when hider gets caught (classic mode)
   useEffect(() => {
@@ -189,6 +198,21 @@ function GameContent() {
     }
     prevIsZombieRef.current = !!isZombie;
   }, [isZombie]);
+
+  // 10-second grace period after each zone shrink
+  useEffect(() => {
+    if (!isShrinkMode) return;
+    const step = game?.currentShrinkStep || 0;
+    if (prevShrinkStepRef.current === null) {
+      prevShrinkStepRef.current = step;
+      return;
+    }
+    if (step > prevShrinkStepRef.current) {
+      prevShrinkStepRef.current = step;
+      setShrinkGrace(true);
+      setTimeout(() => setShrinkGrace(false), 10_000);
+    }
+  }, [game?.currentShrinkStep, isShrinkMode]);
 
   // Game-end timer
   useEffect(() => {
@@ -278,11 +302,11 @@ function GameContent() {
   const caughtCount = hiders.filter((p) => p.caught).length;
   const uncaughtHiders = hiders.filter((p) => !p.caught);
 
-  const outOfZoneHiders = zone
-    ? hiders.filter((p) => !p.caught && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, zone))
+  const outOfZoneHiders = activeZone
+    ? hiders.filter((p) => !p.caught && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, activeZone))
     : [];
-  const outOfZoneSeekers = zone
-    ? players.filter((p) => p.role === 'seeker' && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, zone))
+  const outOfZoneSeekers = activeZone
+    ? players.filter((p) => p.role === 'seeker' && p.lat != null && p.lng != null && !pointInPolygon(p.lat, p.lng, activeZone))
     : [];
   const outOfZoneUids = [
     ...outOfZoneHiders.map((p) => p.uid),
@@ -305,6 +329,11 @@ function GameContent() {
 
   const myPendingClaim = isSeeker && catchRequests
     ? Object.entries(catchRequests).find(([, req]) => req.seekerUid === user.uid)
+    : null;
+
+  const maxShrinkStep = (shrinkZones?.length ?? 1) - 1;
+  const shrinkSecondsLeft = isShrinkMode && game?.nextShrinkAt && currentShrinkStep < maxShrinkStep
+    ? Math.max(0, Math.ceil((game.nextShrinkAt - now) / 1000))
     : null;
 
   return (
@@ -333,6 +362,9 @@ function GameContent() {
         showPlayers
         showPings={isSeeker}
         onMapClick={placingDecoy ? handleDecoyPlace : null}
+        shrinkZones={isShrinkMode ? shrinkZones : null}
+        currentShrinkStep={currentShrinkStep}
+        gracePeriodActive={isShrinkMode && shrinkGrace}
       />
 
       {/* Top UI */}
@@ -340,6 +372,23 @@ function GameContent() {
         {outOfZone && !isCaught && (
           <div className="bg-game-red text-white text-center py-2 text-sm font-bold">
             Du verlässt die Spielzone! Kehre zurück.
+          </div>
+        )}
+        {isShrinkMode && shrinkGrace && (
+          <div style={{
+            backgroundColor: 'rgba(239,68,68,0.95)', color: 'white',
+            textAlign: 'center', padding: '6px 12px', fontSize: '0.8rem', fontWeight: 700,
+            animation: 'countdownPulse 1.2s ease-in-out infinite',
+          }}>
+            ⚠️ Zone schrumpft! 10 Sekunden Gnadenfrist
+          </div>
+        )}
+        {shrinkSecondsLeft !== null && !shrinkGrace && (
+          <div style={{
+            backgroundColor: 'rgba(249,115,22,0.92)', color: 'white',
+            textAlign: 'center', padding: '4px 12px', fontSize: '0.78rem', fontWeight: 700,
+          }}>
+            🌀 Zone schrumpft in {Math.floor(shrinkSecondsLeft / 60)}:{String(shrinkSecondsLeft % 60).padStart(2, '0')}
           </div>
         )}
         {campingWarning && (

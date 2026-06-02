@@ -1,6 +1,7 @@
 import { ref, set, update, push, get, query, orderByChild, equalTo, runTransaction } from 'firebase/database';
 import { db } from '../firebase';
 import { generateUniqueCode } from '../utils/sessionCode';
+import { computeShrinkZones } from '../utils/shrinkPolygon';
 
 export function useSession() {
   async function createSession(uid, displayName, settings, zone, gameMode = 'classic') {
@@ -83,7 +84,7 @@ export function useSession() {
     return sessionId;
   }
 
-  async function startGame(sessionId, settings, roleAssignments = null) {
+  async function startGame(sessionId, settings, roleAssignments = null, gameMode = 'classic') {
     const now = Date.now();
     const hidingMs = settings.hidingDuration * 60 * 1000;
     const gameMs = settings.gameDuration * 60 * 1000;
@@ -98,6 +99,18 @@ export function useSession() {
       'game/pingInterval': pingMs,
       'game/pingCount': 0,
     };
+
+    if (gameMode === 'shrink') {
+      const zoneSnap = await get(ref(db, `sessions/${sessionId}/zone/polygon`));
+      const polygon = zoneSnap.val();
+      if (polygon) {
+        const zones = computeShrinkZones(polygon, settings.gameDuration);
+        patch['shrinkZones'] = zones;
+        patch['game/currentShrinkStep'] = 0;
+        patch['game/nextShrinkAt'] = now + hidingMs + 120_000;
+        patch['game/shrinkInterval'] = 120_000;
+      }
+    }
 
     if (roleAssignments) {
       Object.entries(roleAssignments).forEach(([uid, role]) => {
@@ -131,6 +144,7 @@ export function useSession() {
       'game': null,
       'stats': null,
       'catchRequests': null,
+      'shrinkZones': null,
     };
 
     Object.keys(players).forEach((uid) => {

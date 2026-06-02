@@ -122,7 +122,7 @@ function LobbyContent() {
     setStarting(true);
     try {
       const roleAssignments = randomRoles ? assignRandomRoles(players) : null;
-      await startGame(sessionId, meta.settings, roleAssignments);
+      await startGame(sessionId, meta.settings, roleAssignments, meta.gameMode);
       navigate(`/game/${sessionId}/role-reveal`);
     } catch {
       setStarting(false);
@@ -200,7 +200,11 @@ function LobbyContent() {
           {!editingSettings ? (
             <div className="flex items-center justify-between">
               <div className="flex gap-3 text-game-muted text-xs flex-wrap">
-                <span>{meta.gameMode === 'zombie' ? '🧟 Zombie' : '🎮 Klassisch'}</span>
+                <span>
+                  {meta.gameMode === 'zombie' ? '🧟 Zombie'
+                   : meta.gameMode === 'shrink' ? '🌀 Schrumpfzone'
+                   : '🎮 Klassisch'}
+                </span>
                 <span>⏱ {meta.settings?.gameDuration} Min</span>
                 <span>🙈 {meta.settings?.hidingDuration} Min</span>
                 <span>📡 Ping alle {meta.settings?.pingInterval} Min</span>
