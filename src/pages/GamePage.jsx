@@ -271,7 +271,7 @@ function GameContent() {
 
   // Decoy placement
   async function handleDecoyPlace({ lat, lng }) {
-    if (!pointInPolygon(lat, lng, zone)) {
+    if (!pointInPolygon(lat, lng, activeZone)) {
       setDecoyError('Position muss innerhalb der Spielzone liegen.');
       setTimeout(() => setDecoyError(''), 3000);
       return;

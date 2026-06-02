@@ -12,12 +12,12 @@ function shrinkPolygon(polygon, factor) {
   }));
 }
 
-// Returns array of polygons: [original, step1, step2, ...] (max 5 shrinks)
-// Final zone is ~25% of the original area
+// Returns array of polygons: [original, step1, step2] (max 2 shrinks)
+// Final zone is ~50% of the original area
 export function computeShrinkZones(polygon, gameDurationMinutes) {
-  const steps = Math.min(5, Math.floor(gameDurationMinutes / 2));
+  const steps = Math.min(2, Math.floor(gameDurationMinutes / 2));
   if (steps === 0) return [polygon];
-  const perStepFactor = Math.pow(0.25, 1 / steps);
+  const perStepFactor = Math.pow(0.5, 1 / steps);
   const zones = [polygon];
   let current = polygon;
   for (let i = 0; i < steps; i++) {
