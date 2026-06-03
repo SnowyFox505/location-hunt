@@ -264,7 +264,7 @@ export default function CreatePage() {
       key: 'ghost', icon: '👻', label: 'Unsichtbar',
       tagline: 'Kein Ping — nur ein Radar',
       desc: 'Vergiss alles was du über Pings weißt. Im Unsichtbar-Modus gibt es keine Positionshinweise, keine Koordinaten, keine Hilfe. Seeker haben nur ein pulsierendes Näherungs-Radar – es wird schneller je näher ein Hider ist, aber verrät keine Richtung. Reines Instinkt-Spiel. Hider gewinnen automatisch wenn die Zeit abläuft – sie müssen nur lange genug durchhalten.',
-      available: false,
+      available: true,
     },
     {
       key: 'abilities', icon: '⚡', label: 'Fähigkeiten',
@@ -471,24 +471,71 @@ export default function CreatePage() {
                 })}
               </div>
 
+              {/* Unsichtbar — full width (same style as Klassisch) */}
+              {(() => {
+                const { key, icon, label, tagline } = modes[3];
+                const selected = gameMode === key;
+                return (
+                  <div style={{ animation: 'fadeInUp 0.4s 0.31s ease both', opacity: 0, position: 'relative' }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setOpenInfo(key); }}
+                      style={{
+                        position: 'absolute', top: 10, right: 10, zIndex: 2,
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: 'rgba(59,130,246,0.22)', border: '1.5px solid rgba(59,130,246,0.6)',
+                        color: '#93C5FD', fontSize: 11, fontStyle: 'italic', fontWeight: 700,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >i</button>
+                    {selected && (
+                      <div style={{
+                        position: 'absolute', top: 10, left: 12, zIndex: 2,
+                        width: 18, height: 18, borderRadius: '50%', background: '#3B82F6',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, color: 'white', fontWeight: 700,
+                      }}>✓</div>
+                    )}
+                    <button
+                      onClick={() => setGameMode(key)}
+                      style={{
+                        width: '100%', borderRadius: 16, padding: '18px 48px 18px 20px',
+                        border: `2px solid ${selected ? '#3B82F6' : 'rgba(48,54,61,0.7)'}`,
+                        background: selected ? 'rgba(59,130,246,0.14)' : 'rgba(22,27,34,0.72)',
+                        boxShadow: selected ? '0 0 0 3px rgba(59,130,246,0.18), 0 4px 20px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.3)',
+                        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                        cursor: 'pointer', transition: 'all 0.18s',
+                        display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16, textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ fontSize: '2.6rem', lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+                      <div>
+                        <div style={{ color: 'white', fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{label}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', lineHeight: 1.4 }}>{tagline}</div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })()}
+
               {/* Demnächst divider */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                animation: 'fadeIn 0.4s 0.32s ease both', opacity: 0,
+                animation: 'fadeIn 0.4s 0.38s ease both', opacity: 0,
               }}>
                 <div style={{ flex: 1, height: 1, background: 'rgba(48,54,61,0.6)' }} />
                 <span style={{ color: '#F97316', fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Demnächst</span>
                 <div style={{ flex: 1, height: 1, background: 'rgba(48,54,61,0.6)' }} />
               </div>
 
-              {/* Unsichtbar + Fähigkeiten — 2 col, smaller */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {modes.slice(3).map(({ key, icon, label, tagline }, i) => (
-                  <div key={key} style={{ animation: `fadeInUp 0.4s ${0.37 + i * 0.07}s ease both`, opacity: 0, position: 'relative' }}>
+              {/* Fähigkeiten — full width, dimmed */}
+              {(() => {
+                const { key, icon, label, tagline } = modes[4];
+                return (
+                  <div style={{ animation: 'fadeInUp 0.4s 0.44s ease both', opacity: 0, position: 'relative' }}>
                     <button
                       onClick={(e) => { e.stopPropagation(); setOpenInfo(key); }}
                       style={{
-                        position: 'absolute', top: 8, right: 8, zIndex: 2,
+                        position: 'absolute', top: 10, right: 10, zIndex: 2,
                         width: 22, height: 22, borderRadius: '50%',
                         background: 'rgba(59,130,246,0.22)', border: '1.5px solid rgba(59,130,246,0.6)',
                         color: '#93C5FD', fontSize: 11, fontStyle: 'italic', fontWeight: 700,
@@ -496,22 +543,22 @@ export default function CreatePage() {
                       }}
                     >i</button>
                     <div style={{
-                      width: '100%', minHeight: 110,
-                      borderRadius: 16, padding: '14px 10px 12px',
+                      width: '100%', borderRadius: 16, padding: '18px 48px 18px 20px',
                       border: '2px solid rgba(48,54,61,0.4)',
                       background: 'rgba(13,17,23,0.45)',
                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                       opacity: 0.5,
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center', gap: 5, textAlign: 'center',
+                      display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16, textAlign: 'left',
                     }}>
-                      <span style={{ fontSize: '2rem', lineHeight: 1 }}>{icon}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: '0.82rem' }}>{label}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', lineHeight: 1.35 }}>{tagline}</span>
+                      <span style={{ fontSize: '2.6rem', lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+                      <div>
+                        <div style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{label}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', lineHeight: 1.4 }}>{tagline}</div>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
             </div>
 
@@ -577,8 +624,8 @@ export default function CreatePage() {
                 </div>
               </div>
 
-              {/* Ping-Intervall */}
-              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.21s ease both', opacity: 0 }}>
+              {/* Ping-Intervall — not relevant in ghost mode */}
+              {gameMode !== 'ghost' && <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.21s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Ping-Intervall</h2>
                 <select
                   value={settings.pingInterval}
@@ -604,7 +651,7 @@ export default function CreatePage() {
                 <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', marginTop: 8 }}>
                   Alle X Minuten erhalten Seeker einen Ping mit Hider-Positionen.
                 </p>
-              </div>
+              </div>}
 
               <div style={{ animation: 'fadeInUp 0.4s 0.29s ease both', opacity: 0 }}>
                 <Button onClick={() => setStep(3)}>Weiter: Zone zeichnen →</Button>

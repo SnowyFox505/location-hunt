@@ -203,11 +203,12 @@ function LobbyContent() {
                 <span>
                   {meta.gameMode === 'zombie' ? '🧟 Zombie'
                    : meta.gameMode === 'shrink' ? '🌀 Schrumpfzone'
+                   : meta.gameMode === 'ghost'  ? '👻 Unsichtbar'
                    : '🎮 Klassisch'}
                 </span>
                 <span>⏱ {meta.settings?.gameDuration} Min</span>
                 <span>🙈 {meta.settings?.hidingDuration} Min</span>
-                <span>📡 Ping alle {meta.settings?.pingInterval} Min</span>
+                {meta.gameMode !== 'ghost' && <span>📡 Ping alle {meta.settings?.pingInterval} Min</span>}
               </div>
               {isHost && (
                 <button onClick={openEditSettings} className="text-game-muted hover:text-game-blue transition-colors cursor-pointer ml-2 text-base shrink-0" title="Einstellungen bearbeiten">

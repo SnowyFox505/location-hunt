@@ -177,6 +177,10 @@ html, body, #root {
   60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
   100% { transform: scale(1) rotate(0deg);   opacity: 1; }
 }
+@keyframes radarPulse {
+  0%   { transform: scale(0.55); opacity: 0.9; }
+  100% { transform: scale(2.4);  opacity: 0;   }
+}
 @keyframes caughtFlash {
   0%   { opacity: 0; }
   12%  { opacity: 1; }

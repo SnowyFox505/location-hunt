@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react';
 import { ref, runTransaction, set, get, update } from 'firebase/database';
 import { db } from '../firebase';
 
-export function usePings(sessionId, players, myUid, myRole, active) {
+export function usePings(sessionId, players, myUid, myRole, active, gameMode) {
   const activeRef = useRef(active);
   activeRef.current = active;
 
   useEffect(() => {
-    if (!active || !sessionId || myRole !== 'seeker') return;
+    if (!active || !sessionId || myRole !== 'seeker' || gameMode === 'ghost') return;
 
     const interval = setInterval(async () => {
       if (!activeRef.current) return;
@@ -67,5 +67,5 @@ export function usePings(sessionId, players, myUid, myRole, active) {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [active, sessionId, myRole]);
+  }, [active, sessionId, myRole, gameMode]);
 }

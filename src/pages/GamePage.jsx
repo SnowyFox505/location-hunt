@@ -14,6 +14,7 @@ import { haversine } from '../utils/haversine';
 import { db } from '../firebase';
 import GameMap from '../components/Map/GameMap';
 import Countdown from '../components/UI/Countdown';
+import ProximityRadar from '../components/Game/ProximityRadar';
 
 function CatchMenu({ uncaughtHiders, onClaim, onClose }) {
   return (
@@ -125,6 +126,7 @@ function GameContent() {
 
   const isZombieMode = meta?.gameMode === 'zombie';
   const isShrinkMode = meta?.gameMode === 'shrink';
+  const isGhostMode  = meta?.gameMode === 'ghost';
   const myPlayer = players.find((p) => p.uid === user.uid);
   const isSeeker = myPlayer?.role === 'seeker';
   const isCaught = myPlayer?.caught;
@@ -138,11 +140,11 @@ function GameContent() {
   statsRef.current = stats;
 
   const { position } = useGPS(sessionId, user.uid, true);
-  usePings(sessionId, players, user.uid, myPlayer?.role, meta?.status === 'playing');
+  usePings(sessionId, players, user.uid, myPlayer?.role, meta?.status === 'playing', meta?.gameMode);
   useShrinkZone(sessionId, game, shrinkZones?.length || 0, myPlayer?.role, isShrinkMode && meta?.status === 'playing');
 
-  // Anti-camping: only active when ping interval is 3 min or longer
-  const antiCampingActive = meta?.status === 'playing' && (meta?.settings?.pingInterval ?? 3) >= 3;
+  // Anti-camping: only active when ping interval is 3 min or longer; not in ghost mode (no pings)
+  const antiCampingActive = !isGhostMode && meta?.status === 'playing' && (meta?.settings?.pingInterval ?? 3) >= 3;
   useAntiCamping(sessionId, players, myPlayer?.role, antiCampingActive);
 
   useWakeLock(true);
@@ -294,7 +296,7 @@ function GameContent() {
   }
 
   // Camping warning: show after 2 min still (1 min before ping fires at 3 min)
-  const antiCampingEnabled = (meta?.settings?.pingInterval ?? 3) >= 3;
+  const antiCampingEnabled = !isGhostMode && (meta?.settings?.pingInterval ?? 3) >= 3;
   const campingWarning = !isSeeker && !isCaught && antiCampingEnabled &&
     myPlayer?.lastMovedAt != null && (now - myPlayer.lastMovedAt) > 120_000;
 
@@ -357,10 +359,10 @@ function GameContent() {
         zone={zone}
         players={mapPlayers}
         outOfZonePlayers={outOfZoneUids}
-        pings={isSeeker ? pings : null}
+        pings={isSeeker && !isGhostMode ? pings : null}
         myUid={user.uid}
         showPlayers
-        showPings={isSeeker}
+        showPings={isSeeker && !isGhostMode}
         onMapClick={placingDecoy ? handleDecoyPlace : null}
         shrinkZones={isShrinkMode ? shrinkZones : null}
         currentShrinkStep={currentShrinkStep}
@@ -469,8 +471,13 @@ function GameContent() {
         </div>
       )}
 
-      {/* HIDER: Decoy button (bottom left) */}
-      {!isSeeker && !isCaught && (
+      {/* SEEKER: Proximity radar (ghost mode only) */}
+      {isSeeker && isGhostMode && (
+        <ProximityRadar players={players} myPlayer={myPlayer} />
+      )}
+
+      {/* HIDER: Decoy button (bottom left) — hidden in ghost mode (no pings to fake) */}
+      {!isSeeker && !isCaught && !isGhostMode && (
         <div style={{ position: 'absolute', bottom: 28, left: 20, zIndex: 1000 }}>
           {!myPlayer?.usedDecoy ? (
             !placingDecoy ? (
