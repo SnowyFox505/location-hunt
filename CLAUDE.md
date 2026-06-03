@@ -63,7 +63,10 @@ sessions/{sessionId}/
                   lastPing, online, lastMovedAt, lastLat, lastLng,
                   lastCampingPingAt, zombie (zombie mode only)
   zone/polygon  array of {lat,lng}
-  game/         startedAt, endsAt, nextPingAt, pingInterval, pingCount
+  shrinkZones/  array of polygons (pre-computed at game start, shrink mode only)
+                [original, step1, step2] — each polygon is array of {lat,lng}
+  game/         startedAt, endsAt, nextPingAt, pingInterval, pingCount,
+                currentShrinkStep, nextShrinkAt, shrinkInterval (shrink mode only)
   stats/        endedAt, winner
   pings/{timestamp}/{uid}/  lat, lng, name
   catchRequests/{uid}/      seekerUid, seekerName, timestamp
@@ -93,6 +96,10 @@ pendingVerifications/{uid}/ code, expiresAt
 `useUserProfile` (`src/hooks/useUserProfile.js`) listens to `users/{uid}` in realtime. Exposes `saveDisplayName`, `saveColor`, `savePhoto` (compresses to 96×96 base64 JPEG), `removePhoto`.
 
 `useZones` (`src/hooks/useZones.js`) manages saved zones at `savedZones/{uid}`. Handles save, delete, share (generates a 6-char code at `sharedZones/{code}`), and import by code.
+
+`useShrinkZone` (`src/hooks/useShrinkZone.js`) advances `game/currentShrinkStep` and `game/nextShrinkAt` atomically via `runTransaction` on the full `game` object. Runs only for seekers (same pattern as `usePings`), checks every 5 seconds. Uses `gameRef = useRef(game)` to avoid stale closure inside `setInterval`.
+
+`computeShrinkZones` (`src/utils/shrinkPolygon.js`) pre-computes all shrink polygon steps at game start. `steps = Math.min(2, Math.floor(gameDurationMinutes / 2))`, `perStepFactor = Math.pow(0.5, 1/steps)` — max 2 steps, ~70% per step, ~50% final area. Returns `[original, step1, step2]`.
 
 `AuthContext` (`src/contexts/AuthContext.jsx`) exposes: `user`, `loading`, `emailVerified` (null=loading, true=verified, false=needs verification), `register`, `login`, `logout`, `sendVerificationCode`, `verifyCode`, `deleteAccount`, `mapError`. Email verification uses EmailJS to send a 6-digit code stored at `pendingVerifications/{uid}` with 15-min expiry. Existing users with no `emailVerified` field are treated as verified. `deleteAccount` removes `users/{uid}`, `savedZones/{uid}`, `pendingVerifications/{uid}`, then calls Firebase `deleteUser`.
 
@@ -170,6 +177,8 @@ Glass card style used on CreatePage and similar screens:
 
 **Zombie mode** (`meta.gameMode === 'zombie'`): When a hider confirms a catch, their `role` is set to `'seeker'` and `zombie: true` is written instead of `caught: true`. The catch win condition checks `players.filter(p => p.role === 'hider' && p.uid !== user.uid).length === 0`. Zombie players automatically join the ping system (role === 'seeker') and see hider pings. Their marker color is purple (`#A855F7`).
 
+**Schrumpfzone mode** (`meta.gameMode === 'shrink'`): `shrinkZones` is pre-computed by `computeShrinkZones` during `startGame` and stored at `sessions/{sessionId}/shrinkZones`. `useShrinkZone` advances the step via atomic `runTransaction`. `GameMap.jsx` animates the polygon transition over 2500ms (ease-out cubic lerp) and shows a dashed preview ring for the next step. `GamePage.jsx` computes `activeZone = shrinkZones[currentShrinkStep]` and uses it for ALL zone checks (out-of-zone penalty, decoy placement). A 10-second grace period (`shrinkGrace` state) fires when a new step is detected — disables out-of-zone penalty during transition. `prevShrinkStepRef` is initialized to `null` (not 0) to avoid false grace period on join.
+
 **Out-of-zone penalty**: `pointInPolygon` (ray-casting) runs on every GPS update. If a hider is outside the zone, their live position is shown to seekers immediately (orange pulsing marker).
 
 **Ping deduplication** (`GameMap.jsx`): Only the latest ping per hider UID is shown — iterates all `pings/{timestamp}` entries and keeps the newest per player.
@@ -179,3 +188,7 @@ Glass card style used on CreatePage and similar screens:
 **QR codes**: LobbyPage shows a QR code of the session code via `qrcode.react`. JoinPage has a camera scanner using `jsqr` + `getUserMedia` + `requestAnimationFrame` — scanned code pre-fills the input field. QR flow is in-app only (not scannable by system camera) to keep PWA users within the app.
 
 **`navigator.vibrate` is not supported on iOS** — the vibration utility has been removed entirely.
+
+### CreatePage flow
+
+3-step wizard: **Step 1** → mode picker (full-screen animated 2×2 grid, `available: false` cards shown dimmed with "Demnächst" badge), **Step 2** → settings (Spielzeit, Versteckzeit, Ping-Intervall), **Step 3** → zone drawing + session create. `ProgressDots` inner component shows current step; active dot expands to 20px width. All elements use staggered `fadeInUp` entrance animations. Current modes: `classic`, `zombie`, `shrink` (available), `ghost` (coming soon).
