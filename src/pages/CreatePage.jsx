@@ -5,7 +5,6 @@ import { useSession } from '../hooks/useSession';
 import { useZones } from '../hooks/useZones';
 import ZoneDrawer from '../components/Map/ZoneDrawer';
 import Button from '../components/UI/Button';
-import Input from '../components/UI/Input';
 
 const GAME_DURATION_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
 const HIDING_DURATION_OPTIONS = [1, 2, 3, 5, 10];
@@ -236,35 +235,83 @@ export default function CreatePage() {
     try {
       const { sessionId } = await createSession(user.uid, user.displayName || user.email, settings, polygon, gameMode);
       navigate(`/lobby/${sessionId}`);
-    } catch (e) {
+    } catch {
       setError('Fehler beim Erstellen der Session. Bitte versuche es erneut.');
       setLoading(false);
     }
   }
 
   const modes = [
-    { key: 'classic', icon: '🎮', label: 'Klassisch', desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.', available: true },
-    { key: 'zombie', icon: '🧟', label: 'Zombie Modus', desc: 'Einmal gefangen, immer auf der falschen Seite. Wer als Hider geschnappt wird, wechselt sofort die Seite und jagt von nun an seine ehemaligen Mitspieler. Das Gleichgewicht kann in Sekunden kippen – aus einem Seeker werden zwei, aus zwei werden vier. Das Spiel endet wenn der letzte freie Hider gefangen ist oder die Zeit abläuft.', available: true },
-    { key: 'shrink', icon: '🌀', label: 'Schrumpfzone', desc: 'Die Zone gibt euch keine Zeit zum Entspannen. Alle 2 Minuten zieht sich die Spielzone zusammen – unaufhaltsam, wie bei Battle Royale. Wer außerhalb der neuen Zone erwischt wird, ist für alle Spieler sichtbar. Je länger das Spiel dauert, desto enger wird es – und desto schwieriger wird es sich zu verstecken.', available: true },
-    { key: 'ghost', icon: '👻', label: 'Unsichtbar', desc: 'Vergiss alles was du über Pings weißt. Im Unsichtbar-Modus gibt es keine Positionshinweise, keine Koordinaten, keine Hilfe. Seeker haben nur ein pulsierendes Näherungs-Radar – es wird schneller je näher ein Hider ist, aber verrät keine Richtung. Reines Instinkt-Spiel. Hider gewinnen automatisch wenn die Zeit abläuft – sie müssen nur lange genug durchhalten.', available: false },
+    {
+      key: 'classic', icon: '🎮', label: 'Klassisch',
+      tagline: 'Das originale GPS-Versteckspiel',
+      desc: 'Das originale Versteckspiel — Hider verstecken sich, Seeker spüren sie per GPS-Pings auf. Wer zuerst alle Hider findet, gewinnt.',
+      available: true,
+    },
+    {
+      key: 'zombie', icon: '🧟', label: 'Zombie',
+      tagline: 'Wer gefangen wird, jagt mit',
+      desc: 'Einmal gefangen, immer auf der falschen Seite. Wer als Hider geschnappt wird, wechselt sofort die Seite und jagt von nun an seine ehemaligen Mitspieler. Das Gleichgewicht kann in Sekunden kippen – aus einem Seeker werden zwei, aus zwei werden vier. Das Spiel endet wenn der letzte freie Hider gefangen ist oder die Zeit abläuft.',
+      available: true,
+    },
+    {
+      key: 'shrink', icon: '🌀', label: 'Schrumpfzone',
+      tagline: 'Die Zone wird immer enger',
+      desc: 'Die Zone gibt euch keine Zeit zum Entspannen. Alle 2 Minuten zieht sich die Spielzone zusammen – unaufhaltsam, wie bei Battle Royale. Wer außerhalb der neuen Zone erwischt wird, ist für alle Spieler sichtbar. Je länger das Spiel dauert, desto enger wird es – und desto schwieriger wird es sich zu verstecken.',
+      available: true,
+    },
+    {
+      key: 'ghost', icon: '👻', label: 'Unsichtbar',
+      tagline: 'Kein Ping — nur ein Radar',
+      desc: 'Vergiss alles was du über Pings weißt. Im Unsichtbar-Modus gibt es keine Positionshinweise, keine Koordinaten, keine Hilfe. Seeker haben nur ein pulsierendes Näherungs-Radar – es wird schneller je näher ein Hider ist, aber verrät keine Richtung. Reines Instinkt-Spiel. Hider gewinnen automatisch wenn die Zeit abläuft – sie müssen nur lange genug durchhalten.',
+      available: false,
+    },
   ];
 
-  const activeMode = openInfo ? modes.find(m => m.key === openInfo) : null;
+  const activeInfoMode = openInfo ? modes.find((m) => m.key === openInfo) : null;
+
+  const BG = (
+    <>
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'url(/bg-home.png)',
+        backgroundSize: 'cover', backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(160deg, rgba(13,17,23,0.5) 0%, rgba(13,17,23,0.75) 50%, rgba(13,17,23,0.95) 100%)',
+        pointerEvents: 'none',
+      }} />
+    </>
+  );
+
+  const ProgressDots = ({ current }) => (
+    <div className="flex gap-1.5">
+      {[1, 2, 3].map((s) => (
+        <div key={s} style={{
+          width: s === current ? 20 : 8, height: 8, borderRadius: 4,
+          background: s <= current ? '#3B82F6' : 'rgba(48,54,61,0.8)',
+          transition: 'all 0.3s ease',
+        }} />
+      ))}
+    </div>
+  );
 
   return (
     <>
-      {/* ── Mode info popup ── */}
-      {activeMode && (
+      {/* ── Mode info popup (shared across all steps) ── */}
+      {activeInfoMode && (
         <div
           onClick={() => setOpenInfo(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease both' }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease both' }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'relative', width: '100%', maxWidth: 320,
-              background: '#161B22', border: '1px solid #30363D', borderRadius: 16,
-              padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+              background: '#161B22', border: '1px solid #30363D', borderRadius: 20,
+              padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
               animation: 'scaleIn 0.22s ease both',
             }}
           >
@@ -277,169 +324,177 @@ export default function CreatePage() {
                 color: 'rgba(255,255,255,0.7)', fontSize: 14, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
-            >
-              ✕
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: '1.8rem' }}>{activeMode.icon}</span>
+            >✕</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <span style={{ fontSize: '2rem' }}>{activeInfoMode.icon}</span>
               <div>
-                <div style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>{activeMode.label}</div>
-                {!activeMode.available && (
-                  <div style={{ color: '#F97316', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ color: 'white', fontWeight: 700, fontSize: '1.05rem' }}>{activeInfoMode.label}</div>
+                {!activeInfoMode.available && (
+                  <div style={{ color: '#F97316', fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Demnächst
                   </div>
                 )}
               </div>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: 1.6, margin: 0 }}>
-              {activeMode.desc}
+            <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.85rem', lineHeight: 1.65, margin: 0 }}>
+              {activeInfoMode.desc}
             </p>
           </div>
         </div>
       )}
 
-      {/* ── Step 1: Settings ── */}
+      {/* ── Step 1: Game mode selection ── */}
       {step === 1 && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          backgroundImage: 'url(/bg-home.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}>
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(160deg, rgba(13,17,23,0.45) 0%, rgba(13,17,23,0.72) 50%, rgba(13,17,23,0.92) 100%)',
-            pointerEvents: 'none',
-          }} />
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+          {BG}
+          <div className="relative flex flex-col h-full max-w-sm mx-auto w-full" style={{ zIndex: 1 }}>
 
+            {/* Header */}
+            <div className="pt-safe px-4 py-5 flex items-center justify-between shrink-0">
+              <button
+                onClick={() => navigate('/home')}
+                style={{ color: 'rgba(255,255,255,0.65)', fontSize: 20, lineHeight: 1 }}
+                className="cursor-pointer"
+              >←</button>
+              <ProgressDots current={1} />
+            </div>
+
+            {/* Title */}
+            <div className="px-6 pb-6 shrink-0" style={{ animation: 'fadeInUp 0.4s ease both' }}>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+                Spielmodus
+              </p>
+              <h1 style={{ color: 'white', fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+                Welchen Modus<br />möchtest du spielen?
+              </h1>
+            </div>
+
+            {/* Mode grid */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {modes.map(({ key, icon, label, tagline, available }, i) => {
+                  const selected = gameMode === key;
+                  return (
+                    <div
+                      key={key}
+                      style={{ animation: `fadeInUp 0.4s ${0.1 + i * 0.07}s ease both`, opacity: 0, position: 'relative' }}
+                    >
+                      {/* Demnächst badge */}
+                      {!available && (
+                        <div style={{
+                          position: 'absolute', top: -8, left: 10, zIndex: 2,
+                          background: '#F97316', color: 'white',
+                          fontSize: '0.5rem', fontWeight: 800,
+                          padding: '2px 7px', borderRadius: 20,
+                          textTransform: 'uppercase', letterSpacing: '0.07em',
+                          boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
+                        }}>Demnächst</div>
+                      )}
+
+                      {/* i button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenInfo(key); }}
+                        style={{
+                          position: 'absolute', top: 8, right: 8, zIndex: 2,
+                          width: 22, height: 22, borderRadius: '50%',
+                          background: 'rgba(59,130,246,0.22)',
+                          border: '1.5px solid rgba(59,130,246,0.6)',
+                          color: '#93C5FD', fontSize: 11, fontStyle: 'italic', fontWeight: 700,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >i</button>
+
+                      {/* Card */}
+                      {available ? (
+                        <button
+                          onClick={() => setGameMode(key)}
+                          style={{
+                            width: '100%', minHeight: 150,
+                            borderRadius: 16, padding: '18px 10px 14px',
+                            border: `2px solid ${selected ? '#3B82F6' : 'rgba(48,54,61,0.7)'}`,
+                            background: selected ? 'rgba(59,130,246,0.14)' : 'rgba(22,27,34,0.72)',
+                            boxShadow: selected ? '0 0 0 3px rgba(59,130,246,0.18), 0 4px 20px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.3)',
+                            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                            cursor: 'pointer', transition: 'all 0.18s',
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center', gap: 6,
+                            textAlign: 'center',
+                          }}
+                        >
+                          <span style={{ fontSize: '2.2rem', lineHeight: 1 }}>{icon}</span>
+                          <span style={{ color: 'white', fontWeight: 700, fontSize: '0.88rem' }}>{label}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem', lineHeight: 1.35 }}>{tagline}</span>
+                          {selected && (
+                            <div style={{
+                              position: 'absolute', top: 8, left: 10,
+                              width: 18, height: 18, borderRadius: '50%',
+                              background: '#3B82F6',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 10, color: 'white', fontWeight: 700,
+                            }}>✓</div>
+                          )}
+                        </button>
+                      ) : (
+                        <div style={{
+                          width: '100%', minHeight: 150,
+                          borderRadius: 16, padding: '18px 10px 14px',
+                          border: '2px solid rgba(48,54,61,0.4)',
+                          background: 'rgba(13,17,23,0.45)',
+                          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                          opacity: 0.45,
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', justifyContent: 'center', gap: 6,
+                          textAlign: 'center',
+                        }}>
+                          <span style={{ fontSize: '2.2rem', lineHeight: 1 }}>{icon}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: '0.88rem' }}>{label}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.68rem', lineHeight: 1.35 }}>{tagline}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Auswählen button */}
+            <div className="px-4 py-5 shrink-0" style={{ animation: 'fadeInUp 0.4s 0.42s ease both', opacity: 0 }}>
+              <Button onClick={() => setStep(2)}>
+                Auswählen →
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 2: Settings ── */}
+      {step === 2 && (
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+          {BG}
           <div className="relative flex flex-col h-full max-w-sm mx-auto w-full" style={{ zIndex: 1 }}>
             {/* Header */}
             <div
-              className="pt-safe px-4 py-6 flex items-center gap-3 shrink-0"
+              className="pt-safe px-4 py-5 flex items-center gap-3 shrink-0"
               style={{ borderBottom: '1px solid rgba(48,54,61,0.5)' }}
             >
               <button
-                onClick={() => navigate('/home')}
+                onClick={() => setStep(1)}
                 style={{ color: 'rgba(255,255,255,0.7)', fontSize: 20 }}
                 className="cursor-pointer"
-              >
-                ←
-              </button>
+              >←</button>
               <h1 className="text-white font-bold text-lg" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
                 Einstellungen
               </h1>
-              <div className="ml-auto flex gap-1">
-                {[1, 2].map((s) => (
-                  <div key={s} style={{
-                    width: 8, height: 8, borderRadius: '50%',
-                    background: step >= s ? '#3B82F6' : 'rgba(48,54,61,0.8)',
-                  }} />
-                ))}
+              <div className="ml-auto">
+                <ProgressDots current={2} />
               </div>
             </div>
 
             {/* Settings cards */}
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-5">
 
-              {/* Game mode selector */}
-              {(() => {
-                const infoBtn = (key) => (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setOpenInfo(openInfo === key ? null : key); }}
-                    style={{
-                      position: 'absolute', top: 8, right: 8, zIndex: 10,
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: openInfo === key ? '#3B82F6' : 'rgba(59,130,246,0.25)',
-                      border: '1.5px solid #3B82F6',
-                      color: 'white',
-                      fontSize: 12, fontStyle: 'italic', fontWeight: 700,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    i
-                  </button>
-                );
-                const classic = modes[0];
-                const secondRow = modes.slice(1); // zombie + coming-soon
-                return (
-                  <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.05s ease both', opacity: 0 }}>
-                    <h2 className="text-white font-bold mb-3">Spielmodus</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-                      {/* Klassisch — full-width */}
-                      <div style={{ position: 'relative' }}>
-                        <button
-                          onClick={() => setGameMode('classic')}
-                          style={{
-                            width: '100%', padding: '14px 12px', borderRadius: 12,
-                            border: `2px solid ${gameMode === 'classic' ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
-                            background: gameMode === 'classic' ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
-                            cursor: 'pointer', transition: 'all 0.15s',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                          }}
-                        >
-                          <span style={{ fontSize: '1.5rem' }}>{classic.icon}</span>
-                          <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>{classic.label}</span>
-                        </button>
-                        {infoBtn('classic')}
-                      </div>
-
-                      {/* Second row: zombie (selectable) + coming-soon */}
-                      <div style={{ display: 'flex', gap: 10 }}>
-                        {secondRow.map(({ key, icon, label, available }) => (
-                          <div key={key} style={{ flex: 1 }}>
-                            <div style={{ position: 'relative' }}>
-                              {available ? (
-                                <button
-                                  onClick={() => setGameMode(key)}
-                                  style={{
-                                    width: '100%', padding: '12px 6px', borderRadius: 12,
-                                    border: `2px solid ${gameMode === key ? '#3B82F6' : 'rgba(48,54,61,0.8)'}`,
-                                    background: gameMode === key ? 'rgba(59,130,246,0.15)' : 'rgba(13,17,23,0.4)',
-                                    cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center',
-                                  }}
-                                >
-                                  <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
-                                  <div style={{ color: 'white', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
-                                </button>
-                              ) : (
-                                <div style={{
-                                  padding: '12px 6px', borderRadius: 12,
-                                  border: '2px solid rgba(48,54,61,0.5)',
-                                  background: 'rgba(13,17,23,0.25)',
-                                  textAlign: 'center', opacity: 0.55,
-                                }}>
-                                  <div style={{ fontSize: '1.4rem', marginBottom: 3 }}>{icon}</div>
-                                  <div style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: '0.72rem' }}>{label}</div>
-                                </div>
-                              )}
-                              {!available && (
-                                <div style={{
-                                  position: 'absolute', top: -7, right: -4,
-                                  background: '#F97316', color: 'white',
-                                  fontSize: '0.52rem', fontWeight: 800,
-                                  padding: '2px 6px', borderRadius: 20,
-                                  textTransform: 'uppercase', letterSpacing: '0.06em',
-                                  boxShadow: '0 2px 8px rgba(249,115,22,0.5)',
-                                }}>
-                                  Demnächst
-                                </div>
-                              )}
-                              {infoBtn(key)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                    </div>
-                  </div>
-                );
-              })()}
-
               {/* Spielzeit */}
-              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.13s ease both', opacity: 0 }}>
+              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.05s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Spielzeit</h2>
                 <div className="flex flex-wrap gap-2">
                   {GAME_DURATION_OPTIONS.map((v) => (
@@ -452,7 +507,7 @@ export default function CreatePage() {
               </div>
 
               {/* Versteckzeit */}
-              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.21s ease both', opacity: 0 }}>
+              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.13s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Versteckzeit</h2>
                 <div className="flex flex-wrap gap-2">
                   {HIDING_DURATION_OPTIONS.map((v) => (
@@ -465,7 +520,7 @@ export default function CreatePage() {
               </div>
 
               {/* Ping-Intervall */}
-              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.29s ease both', opacity: 0 }}>
+              <div style={{ ...GLASS_CARD, animation: 'fadeInUp 0.4s 0.21s ease both', opacity: 0 }}>
                 <h2 className="text-white font-bold mb-4">Ping-Intervall</h2>
                 <select
                   value={settings.pingInterval}
@@ -493,20 +548,23 @@ export default function CreatePage() {
                 </p>
               </div>
 
-              <div style={{ animation: 'fadeInUp 0.4s 0.37s ease both', opacity: 0 }}>
-                <Button onClick={() => setStep(2)}>Weiter: Zone zeichnen →</Button>
+              <div style={{ animation: 'fadeInUp 0.4s 0.29s ease both', opacity: 0 }}>
+                <Button onClick={() => setStep(3)}>Weiter: Zone zeichnen →</Button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Step 2: Zone drawing (full-screen map, unchanged) ── */}
-      {step === 2 && (
+      {/* ── Step 3: Zone drawing ── */}
+      {step === 3 && (
         <div className="fixed inset-0 flex flex-col bg-game-bg z-50">
           <div className="pt-safe px-4 py-3 flex items-center gap-3 border-b border-game-border shrink-0 bg-game-bg">
-            <button onClick={() => setStep(1)} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
+            <button onClick={() => setStep(2)} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
             <h1 className="text-game-text font-bold text-lg">Zone zeichnen</h1>
+            <div className="ml-auto">
+              <ProgressDots current={3} />
+            </div>
           </div>
 
           <div className="px-4 py-3 bg-game-card border-b border-game-border shrink-0">
