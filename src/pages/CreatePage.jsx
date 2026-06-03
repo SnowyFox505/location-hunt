@@ -270,7 +270,7 @@ export default function CreatePage() {
       key: 'abilities', icon: '⚡', label: 'Fähigkeiten',
       tagline: 'Sammle Punkte, kaufe Fähigkeiten',
       desc: 'Punkte sammeln, taktisch einsetzen. Hider verdienen Punkte fürs Überleben und Bewegen – Seeker fürs Jagen und Fangen. Mit Punkten kaufst du dir Einmal-Fähigkeiten: als Hider einen Fake-Ping setzen oder dich unsichtbar machen, als Seeker einen Sofort-Ping auslösen oder einen Richtungspfeil zum nächsten Hider aktivieren.',
-      available: false,
+      available: true,
     },
   ];
 
@@ -517,48 +517,52 @@ export default function CreatePage() {
                 );
               })()}
 
-              {/* Demnächst divider */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                animation: 'fadeIn 0.4s 0.38s ease both', opacity: 0,
-              }}>
-                <div style={{ flex: 1, height: 1, background: 'rgba(48,54,61,0.6)' }} />
-                <span style={{ color: '#F97316', fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Demnächst</span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(48,54,61,0.6)' }} />
-              </div>
-
-              {/* Fähigkeiten — full width, dimmed */}
-              {(() => {
-                const { key, icon, label, tagline } = modes[4];
-                return (
-                  <div style={{ animation: 'fadeInUp 0.4s 0.44s ease both', opacity: 0, position: 'relative' }}>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setOpenInfo(key); }}
-                      style={{
-                        position: 'absolute', top: 10, right: 10, zIndex: 2,
-                        width: 22, height: 22, borderRadius: '50%',
-                        background: 'rgba(59,130,246,0.22)', border: '1.5px solid rgba(59,130,246,0.6)',
-                        color: '#93C5FD', fontSize: 11, fontStyle: 'italic', fontWeight: 700,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >i</button>
-                    <div style={{
-                      width: '100%', borderRadius: 16, padding: '18px 48px 18px 20px',
-                      border: '2px solid rgba(48,54,61,0.4)',
-                      background: 'rgba(13,17,23,0.45)',
-                      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                      opacity: 0.5,
-                      display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16, textAlign: 'left',
-                    }}>
-                      <span style={{ fontSize: '2.6rem', lineHeight: 1, flexShrink: 0 }}>{icon}</span>
-                      <div>
-                        <div style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{label}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', lineHeight: 1.4 }}>{tagline}</div>
-                      </div>
+              {/* Unsichtbar + Fähigkeiten — 2 col */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {modes.slice(3).map(({ key, icon, label, tagline }, i) => {
+                  const selected = gameMode === key;
+                  return (
+                    <div key={key} style={{ animation: `fadeInUp 0.4s ${0.31 + i * 0.07}s ease both`, opacity: 0, position: 'relative' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenInfo(key); }}
+                        style={{
+                          position: 'absolute', top: 8, right: 8, zIndex: 2,
+                          width: 22, height: 22, borderRadius: '50%',
+                          background: 'rgba(59,130,246,0.22)', border: '1.5px solid rgba(59,130,246,0.6)',
+                          color: '#93C5FD', fontSize: 11, fontStyle: 'italic', fontWeight: 700,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >i</button>
+                      {selected && (
+                        <div style={{
+                          position: 'absolute', top: 8, left: 10, zIndex: 2,
+                          width: 18, height: 18, borderRadius: '50%', background: '#3B82F6',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, color: 'white', fontWeight: 700,
+                        }}>✓</div>
+                      )}
+                      <button
+                        onClick={() => setGameMode(key)}
+                        style={{
+                          width: '100%', minHeight: 130,
+                          borderRadius: 16, padding: '18px 10px 14px',
+                          border: `2px solid ${selected ? '#3B82F6' : 'rgba(48,54,61,0.7)'}`,
+                          background: selected ? 'rgba(59,130,246,0.14)' : 'rgba(22,27,34,0.72)',
+                          boxShadow: selected ? '0 0 0 3px rgba(59,130,246,0.18), 0 4px 20px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.3)',
+                          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                          cursor: 'pointer', transition: 'all 0.18s',
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center',
+                        }}
+                      >
+                        <span style={{ fontSize: '2.2rem', lineHeight: 1 }}>{icon}</span>
+                        <span style={{ color: 'white', fontWeight: 700, fontSize: '0.88rem' }}>{label}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem', lineHeight: 1.35 }}>{tagline}</span>
+                      </button>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })}
+              </div>
 
             </div>
 

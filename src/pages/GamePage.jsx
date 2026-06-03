@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ref, update, set, remove } from 'firebase/database';
+import { ref, update, set, remove, runTransaction } from 'firebase/database';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame, GameProvider } from '../contexts/GameContext';
 import { useGPS } from '../hooks/useGPS';
@@ -9,12 +9,14 @@ import { useAntiCamping } from '../hooks/useAntiCamping';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useSession } from '../hooks/useSession';
 import { useShrinkZone } from '../hooks/useShrinkZone';
+import { usePointsTimer } from '../hooks/usePointsTimer';
 import { pointInPolygon } from '../utils/pointInPolygon';
 import { haversine } from '../utils/haversine';
 import { db } from '../firebase';
 import GameMap from '../components/Map/GameMap';
 import Countdown from '../components/UI/Countdown';
 import ProximityRadar from '../components/Game/ProximityRadar';
+import AbilityShop from '../components/Game/AbilityShop';
 
 function CatchMenu({ uncaughtHiders, onClaim, onClose }) {
   return (
@@ -93,7 +95,7 @@ function CatchConfirmModal({ request, onConfirm, onDeny, isZombieMode }) {
 
 function GameContent() {
   const { sessionId } = useParams();
-  const { meta, players, zone, game, pings, catchRequests, stats, shrinkZones, loading } = useGame();
+  const { meta, players, zone, game, pings, catchRequests, stats, shrinkZones, abilities, loading } = useGame();
   const { user } = useAuth();
   const { updatePlayerStats } = useSession();
   const navigate = useNavigate();
@@ -107,6 +109,7 @@ function GameContent() {
   const [showCaughtFlash, setShowCaughtFlash] = useState(false);
   const [showZombieFlash, setShowZombieFlash] = useState(false);
   const [shrinkGrace, setShrinkGrace] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   // Tick every second for shrink countdown + camping warning
   useEffect(() => {
@@ -124,9 +127,10 @@ function GameContent() {
   const prevIsZombieRef = useRef(false);
   const prevShrinkStepRef = useRef(null); // null = uninitialized (avoids false-positive grace on join)
 
-  const isZombieMode = meta?.gameMode === 'zombie';
-  const isShrinkMode = meta?.gameMode === 'shrink';
-  const isGhostMode  = meta?.gameMode === 'ghost';
+  const isZombieMode    = meta?.gameMode === 'zombie';
+  const isShrinkMode    = meta?.gameMode === 'shrink';
+  const isGhostMode     = meta?.gameMode === 'ghost';
+  const isAbilitiesMode = meta?.gameMode === 'abilities';
   const myPlayer = players.find((p) => p.uid === user.uid);
   const isSeeker = myPlayer?.role === 'seeker';
   const isCaught = myPlayer?.caught;
@@ -140,7 +144,8 @@ function GameContent() {
   statsRef.current = stats;
 
   const { position } = useGPS(sessionId, user.uid, true);
-  usePings(sessionId, players, user.uid, myPlayer?.role, meta?.status === 'playing', meta?.gameMode);
+  usePings(sessionId, players, user.uid, myPlayer?.role, meta?.status === 'playing', meta?.gameMode, zone);
+  usePointsTimer(sessionId, user.uid, position, isAbilitiesMode && meta?.status === 'playing');
   useShrinkZone(sessionId, game, shrinkZones?.length || 0, myPlayer?.role, isShrinkMode && meta?.status === 'playing');
 
   // Anti-camping: only active when ping interval is 3 min or longer; not in ghost mode (no pings)
@@ -261,6 +266,10 @@ function GameContent() {
         caught: true, caughtAt: now, caughtBy: pendingRequest.seekerUid,
       });
       await remove(ref(db, `sessions/${sessionId}/catchRequests/${user.uid}`));
+      if (isAbilitiesMode && pendingRequest.seekerUid) {
+        runTransaction(ref(db, `sessions/${sessionId}/players/${pendingRequest.seekerUid}/points`),
+          (pts) => (pts || 0) + 5).catch(() => {});
+      }
       const allHiders = players.filter((p) => p.role === 'hider');
       const allCaught = allHiders.every((p) => p.uid === user.uid || p.caught);
       if (allCaught) await handleGameEnd('seeker');
@@ -337,6 +346,28 @@ function GameContent() {
   const shrinkSecondsLeft = isShrinkMode && game?.nextShrinkAt && currentShrinkStep < maxShrinkStep
     ? Math.max(0, Math.ceil((game.nextShrinkAt - now) / 1000))
     : null;
+
+  // Radar arrow (abilities mode, seeker only)
+  const radarData = isAbilitiesMode && isSeeker ? abilities?.radar?.[user.uid] : null;
+  const radarActive = radarData && radarData.expiresAt > now;
+  const radarSecondsLeft = radarActive ? Math.ceil((radarData.expiresAt - now) / 1000) : 0;
+  const radarBearing = (() => {
+    if (!radarActive || !myPlayer?.lat || !myPlayer?.lng) return null;
+    const hiders = players.filter((p) => p.role === 'hider' && !p.caught && p.lat != null && p.lng != null);
+    if (hiders.length === 0) return null;
+    let nearest = null, nearestDist = Infinity;
+    hiders.forEach((h) => {
+      const d = haversine(myPlayer.lat, myPlayer.lng, h.lat, h.lng);
+      if (d < nearestDist) { nearestDist = d; nearest = h; }
+    });
+    if (!nearest) return null;
+    const φ1 = myPlayer.lat * Math.PI / 180;
+    const φ2 = nearest.lat * Math.PI / 180;
+    const Δλ = (nearest.lng - myPlayer.lng) * Math.PI / 180;
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  })();
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -428,12 +459,23 @@ function GameContent() {
                 </p>
               )}
             </div>
-            {game?.endsAt && (
-              <div className="text-right">
-                <p className="text-game-muted text-xs">Verbleibend</p>
-                <Countdown endsAt={game.endsAt} className="text-game-text font-bold text-lg" onComplete={() => {}} />
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {isAbilitiesMode && (
+                <div style={{
+                  background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)',
+                  borderRadius: 14, padding: '2px 10px',
+                  color: '#3B82F6', fontWeight: 700, fontSize: '0.82rem',
+                }}>
+                  ⚡ {myPlayer?.points || 0}
+                </div>
+              )}
+              {game?.endsAt && (
+                <div className="text-right">
+                  <p className="text-game-muted text-xs">Verbleibend</p>
+                  <Countdown endsAt={game.endsAt} className="text-game-text font-bold text-lg" onComplete={() => {}} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div style={{ backgroundColor: 'rgba(13,17,23,0.75)' }} className="text-game-muted text-xs text-center py-1">
@@ -476,8 +518,52 @@ function GameContent() {
         <ProximityRadar players={players} myPlayer={myPlayer} />
       )}
 
-      {/* HIDER: Decoy button (bottom left) — hidden in ghost mode (no pings to fake) */}
-      {!isSeeker && !isCaught && !isGhostMode && (
+      {/* SEEKER: Radar direction arrow (abilities mode) */}
+      {isSeeker && isAbilitiesMode && radarActive && radarBearing !== null && (
+        <div style={{
+          position: 'absolute', bottom: 100, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 1100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            width: 52, height: 52,
+            background: 'rgba(59,130,246,0.2)', border: '2px solid #3B82F6', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 16px rgba(59,130,246,0.4)',
+          }}>
+            <span style={{
+              fontSize: '1.7rem', lineHeight: 1, display: 'block',
+              transform: `rotate(${radarBearing}deg)`,
+              transition: 'transform 1s ease',
+            }}>↑</span>
+          </div>
+          <span style={{
+            color: '#3B82F6', fontSize: '0.65rem', fontWeight: 700,
+            background: 'rgba(13,17,23,0.75)', padding: '1px 7px', borderRadius: 8,
+          }}>{radarSecondsLeft}s</span>
+        </div>
+      )}
+
+      {/* ALL: Shop button (abilities mode only) */}
+      {isAbilitiesMode && !isCaught && (
+        <div style={{ position: 'absolute', bottom: 28, left: 20, zIndex: 1000 }}>
+          <button
+            onClick={() => setShowShop(true)}
+            style={{
+              backgroundColor: '#3B82F6', border: 'none', borderRadius: 20,
+              padding: '14px 20px', cursor: 'pointer',
+              boxShadow: '0 4px 20px rgba(59,130,246,0.4)',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 20 }}>⚡</span>
+            <span style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>Shop</span>
+          </button>
+        </div>
+      )}
+
+      {/* HIDER: Decoy button (bottom left) — hidden in ghost/abilities mode */}
+      {!isSeeker && !isCaught && !isGhostMode && !isAbilitiesMode && (
         <div style={{ position: 'absolute', bottom: 28, left: 20, zIndex: 1000 }}>
           {!myPlayer?.usedDecoy ? (
             !placingDecoy ? (
@@ -540,6 +626,16 @@ function GameContent() {
 
       {pendingRequest && (
         <CatchConfirmModal request={pendingRequest} onConfirm={handleConfirmCatch} onDeny={handleDenyCatch} isZombieMode={isZombieMode} />
+      )}
+
+      {showShop && (
+        <AbilityShop
+          sessionId={sessionId}
+          myPlayer={myPlayer}
+          players={players}
+          zone={zone}
+          onClose={() => setShowShop(false)}
+        />
       )}
     </div>
   );

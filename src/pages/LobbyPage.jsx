@@ -201,9 +201,10 @@ function LobbyContent() {
             <div className="flex items-center justify-between">
               <div className="flex gap-3 text-game-muted text-xs flex-wrap">
                 <span>
-                  {meta.gameMode === 'zombie' ? '🧟 Zombie'
-                   : meta.gameMode === 'shrink' ? '🌀 Schrumpfzone'
-                   : meta.gameMode === 'ghost'  ? '👻 Unsichtbar'
+                  {meta.gameMode === 'zombie'     ? '🧟 Zombie'
+                   : meta.gameMode === 'shrink'    ? '🌀 Schrumpfzone'
+                   : meta.gameMode === 'ghost'     ? '👻 Unsichtbar'
+                   : meta.gameMode === 'abilities' ? '⚡ Fähigkeiten'
                    : '🎮 Klassisch'}
                 </span>
                 <span>⏱ {meta.settings?.gameDuration} Min</span>

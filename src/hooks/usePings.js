@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { ref, runTransaction, set, get, update } from 'firebase/database';
 import { db } from '../firebase';
+import { randomPointInPolygon } from '../utils/randomPointInPolygon';
 
-export function usePings(sessionId, players, myUid, myRole, active, gameMode) {
+export function usePings(sessionId, players, myUid, myRole, active, gameMode, zone) {
   const activeRef = useRef(active);
   activeRef.current = active;
+  const zoneRef = useRef(zone);
+  zoneRef.current = zone;
 
   useEffect(() => {
     if (!active || !sessionId || myRole !== 'seeker' || gameMode === 'ghost') return;
@@ -42,8 +45,17 @@ export function usePings(sessionId, players, myUid, myRole, active, gameMode) {
 
         Object.entries(playersData).forEach(([uid, p]) => {
           if (p.role !== 'hider' || p.caught) return;
+          if (p.ghostActive) {
+            clearPatch[`players/${uid}/ghostActive`] = null;
+            return; // skip — invisible this ping
+          }
+          if (p.fakePingActive) {
+            const pos = randomPointInPolygon(zoneRef.current);
+            if (pos) pingData[uid] = { lat: pos.lat, lng: pos.lng, name: p.name };
+            clearPatch[`players/${uid}/fakePingActive`] = null;
+            return;
+          }
           if (p.queuedDecoy) {
-            // Send the fake position instead of the real one
             pingData[uid] = { lat: p.queuedDecoy.lat, lng: p.queuedDecoy.lng, name: p.name };
             clearPatch[`players/${uid}/queuedDecoy`] = null;
           } else if (p.lat != null && p.lng != null) {

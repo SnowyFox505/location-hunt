@@ -112,6 +112,16 @@ export function useSession() {
       }
     }
 
+    if (gameMode === 'abilities') {
+      const playersSnap = await get(ref(db, `sessions/${sessionId}/players`));
+      Object.keys(playersSnap.val() || {}).forEach((uid) => {
+        patch[`players/${uid}/points`]       = 0;
+        patch[`players/${uid}/ghostUsed`]    = false;
+        patch[`players/${uid}/fakePingActive`] = false;
+        patch[`players/${uid}/ghostActive`]  = false;
+      });
+    }
+
     if (roleAssignments) {
       Object.entries(roleAssignments).forEach(([uid, role]) => {
         patch[`players/${uid}/role`] = role;
@@ -145,6 +155,7 @@ export function useSession() {
       'stats': null,
       'catchRequests': null,
       'shrinkZones': null,
+      'abilities': null,
     };
 
     Object.keys(players).forEach((uid) => {
@@ -159,6 +170,10 @@ export function useSession() {
       patch[`players/${uid}/lastMovedAt`]       = null;
       patch[`players/${uid}/lastLat`]           = null;
       patch[`players/${uid}/lastLng`]           = null;
+      patch[`players/${uid}/points`]            = null;
+      patch[`players/${uid}/ghostUsed`]         = null;
+      patch[`players/${uid}/fakePingActive`]    = null;
+      patch[`players/${uid}/ghostActive`]       = null;
     });
 
     await update(ref(db, `sessions/${sessionId}`), patch);
