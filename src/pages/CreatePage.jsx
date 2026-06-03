@@ -559,7 +559,10 @@ export default function CreatePage() {
       {/* ── Step 3: Zone drawing ── */}
       {step === 3 && (
         <div className="fixed inset-0 flex flex-col bg-game-bg z-50">
-          <div className="pt-safe px-4 py-3 flex items-center gap-3 border-b border-game-border shrink-0 bg-game-bg">
+          <div
+            className="pt-safe px-4 py-3 flex items-center gap-3 border-b border-game-border shrink-0 bg-game-bg"
+            style={{ animation: 'fadeInUp 0.3s ease both' }}
+          >
             <button onClick={() => setStep(2)} className="text-game-muted hover:text-game-text cursor-pointer text-xl">←</button>
             <h1 className="text-game-text font-bold text-lg">Zone zeichnen</h1>
             <div className="ml-auto">
@@ -567,7 +570,10 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <div className="px-4 py-3 bg-game-card border-b border-game-border shrink-0">
+          <div
+            className="px-4 py-3 bg-game-card border-b border-game-border shrink-0"
+            style={{ animation: 'fadeInUp 0.35s 0.08s ease both', opacity: 0 }}
+          >
             <p className="text-game-muted text-sm">
               Tippe auf die Karte um Punkte zu setzen. Doppeltippe zum Abschließen.
             </p>
@@ -579,7 +585,7 @@ export default function CreatePage() {
             )}
           </div>
 
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0" style={{ animation: 'fadeIn 0.5s 0.15s ease both', opacity: 0 }}>
             {gpsCenter ? (
               <ZoneDrawer center={gpsCenter} polygon={polygon} onPolygonDrawn={setPolygon} gpsPosition={gpsCenter} />
             ) : (
@@ -593,7 +599,10 @@ export default function CreatePage() {
             </div>
           )}
 
-          <div className="px-4 py-4 shrink-0 bg-game-bg border-t border-game-border flex gap-3">
+          <div
+            className="px-4 py-4 shrink-0 bg-game-bg border-t border-game-border flex gap-3"
+            style={{ animation: 'fadeInUp 0.35s 0.22s ease both', opacity: 0 }}
+          >
             <button
               onClick={() => setShowLibrary(true)}
               className="flex-none px-4 py-3 rounded-xl border border-game-border text-game-muted hover:border-game-blue hover:text-game-blue text-sm font-semibold cursor-pointer transition-colors"
