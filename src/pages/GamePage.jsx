@@ -324,13 +324,20 @@ function GameContent() {
     ...outOfZoneSeekers.map((p) => p.uid),
   ];
 
+  const isPlaying = meta?.status === 'playing';
   const mapPlayers = isSeeker
     ? [
         ...players.filter((p) => p.role === 'seeker'),
         ...players.filter((p) => p.role === 'hider' && (p.caught || outOfZoneUids.includes(p.uid))),
       ]
+    : isCaught
+    ? [
+        ...players.filter((p) => p.uid === user.uid),
+        ...outOfZoneSeekers,
+      ]
     : [
         ...players.filter((p) => p.uid === user.uid),
+        ...(isPlaying ? players.filter((p) => p.role === 'hider' && p.uid !== user.uid && !p.caught) : []),
         ...outOfZoneSeekers,
       ];
 
