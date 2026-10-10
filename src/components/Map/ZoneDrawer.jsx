@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polygon, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet-draw';
+import { cartoTileUrl } from '../../utils/tiles';
 
 function DrawControl({ onPolygonDrawn }) {
   const map = useMap();
@@ -61,7 +62,7 @@ export default function ZoneDrawer({ center, polygon, onPolygonDrawn, gpsPositio
       attributionControl={false}
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url={cartoTileUrl('dark_all')}
         subdomains="abcd"
         maxZoom={19}
       />

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Polygon, useMap, useMapEvent } from 'react-leaflet';
 import PlayerMarker from './PlayerMarker';
 import PingMarker from './PingMarker';
+import { cartoTileUrl } from '../../utils/tiles';
 
 function RecenterMap({ center }) {
   const map = useMap();
@@ -98,7 +99,7 @@ export default function GameMap({
       attributionControl={false}
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url={cartoTileUrl('light_all')}
         attribution='© OpenStreetMap contributors © CARTO'
         subdomains="abcd"
         maxZoom={19}
