@@ -1,6 +1,47 @@
-# 📍 Location Hunt
+<div align="center">
 
-Echtzeit-Versteckspiel für draußen: Hider verstecken sich in einer selbst gezeichneten Spielzone, Seeker jagen sie anhand von GPS-Pings. Als installierbare **PWA** für Smartphones gebaut, mit Live-Karte, Lobby-System und mehreren Spielmodi.
+<img src="docs/logo.png" alt="LocationHunt logo" width="96">
+
+# LocationHunt
+
+**GPS-Verstecken für draußen.**<br>
+Zone zeichnen, Freunde einladen, verstecken und jagen, live auf der Karte.
+
+<br>
+
+<a href="https://location-hunt.vercel.app"><img src="https://img.shields.io/badge/%E2%96%B6%20Live-location--hunt.vercel.app-3b82f6?style=for-the-badge&labelColor=0b0f19" alt="Live app"></a>
+
+<br>
+
+<img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&labelColor=0b0f19&logo=react&logoColor=white" alt="React">
+<img src="https://img.shields.io/badge/Vite-8-a78bfa?style=flat-square&labelColor=0b0f19&logo=vite&logoColor=white" alt="Vite">
+<img src="https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&labelColor=0b0f19&logo=tailwindcss&logoColor=white" alt="Tailwind">
+<img src="https://img.shields.io/badge/Leaflet-199900?style=flat-square&labelColor=0b0f19&logo=leaflet&logoColor=white" alt="Leaflet">
+<img src="https://img.shields.io/badge/Firebase-Auth%20%2B%20Realtime%20DB-ffca28?style=flat-square&labelColor=0b0f19&logo=firebase&logoColor=white" alt="Firebase">
+<img src="https://img.shields.io/badge/Vercel-ffffff?style=flat-square&labelColor=0b0f19&logo=vercel&logoColor=white" alt="Vercel">
+<img src="https://img.shields.io/badge/PWA-installierbar-3b82f6?style=flat-square&labelColor=0b0f19&logo=pwa&logoColor=white" alt="PWA">
+
+<br><br>
+
+<img src="docs/hero.jpg" alt="LocationHunt auf fünf Handys" width="100%">
+
+</div>
+
+<br>
+
+Echtzeit-Versteckspiel für draußen: **Hider** verstecken sich in einer selbst gezeichneten Spielzone, **Seeker** jagen sie anhand von GPS-Pings. Als installierbare **PWA** für Smartphones gebaut, mit Live-Karte, Lobby-System und fünf Spielmodi.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="20%"><img width="170" src="docs/screenshots/mode.jpg" alt="Spielmodus wählen"><br><sub>Spielmodus wählen</sub></td>
+    <td align="center" width="20%"><img width="170" src="docs/screenshots/zone.jpg" alt="Zone zeichnen"><br><sub>Zone zeichnen</sub></td>
+    <td align="center" width="20%"><img width="170" src="docs/screenshots/lobby.jpg" alt="Lobby"><br><sub>Lobby</sub></td>
+    <td align="center" width="20%"><img width="170" src="docs/screenshots/role.jpg" alt="Rolle"><br><sub>Rolle</sub></td>
+    <td align="center" width="20%"><img width="170" src="docs/screenshots/play.jpg" alt="Spielphase"><br><sub>Spielphase</sub></td>
+  </tr>
+</table>
 
 ## Features
 
